@@ -6,6 +6,7 @@ const Discord = require("discord.js"),
   // 2/18/24
   tsf = require("../config/snowflakes-testing.json"),
   csf = require("../config/snowflakes-testing-commands.json"),
+  db = require("../database/dbControllers"),
   config = require("../config/config.json");
 
 const errorLog = new Discord.WebhookClient(config.error);
@@ -15,6 +16,10 @@ const { nanoid } = require("nanoid");
  * @typedef {Object} ParsedInteraction
  * @property {String} command - The command issued, represented as a string.
  * @property {Array} data - Associated data for the command, such as command options or values selected.
+ */
+
+/**
+ * @typedef { db.tags.docTag } docTag
  */
 
 /**
@@ -75,8 +80,11 @@ function parseInteraction(inter) {
     return { command, data };
   }
 }
-
 const utils = {
+  /**
+   * Shortcut to Discord.Attachment
+   */
+  attachment: new Discord.AttachmentBuilder(),
   /**
    * If a command is run in a channel that doesn't want spam, returns #bot-lobby so results can be posted there.
    * @param {Discord.Message} msg The Discord message to check for bot spam.
@@ -122,6 +130,10 @@ const utils = {
    * Shortcut to Discord.Collection. See docs there for reference.
    */
   Collection: Discord.Collection,
+  /**
+   * Shortcut to config
+   */
+  config,
   /**
    * Confirm Dialog
    * @function confirmInteraction
@@ -198,6 +210,11 @@ const utils = {
    * Shortcut to nanoid. See docs there for reference.
    */
   customId: nanoid,
+
+  /**
+   * Shortcut to 
+   */
+  db: db,
   /**
    * Shortcut to Discord.Util.escapeMarkdown. See docs there for reference.
    */

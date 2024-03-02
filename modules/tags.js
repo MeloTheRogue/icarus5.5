@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 const Augur = require("augurbot-ts"),
   Discord = require('discord.js'),
@@ -7,14 +7,14 @@ const Augur = require("augurbot-ts"),
   u = require("../utils/utils");
 
 /**
- * @type {Discord.Collection<string, u.docTag>}
+ * @type {Discord.Collection<string, u.tag>}
  */
 let tags = new u.Collection();
 
 /**
  * @param {string | undefined} tag The tag name to find
  */
-const findTag = (tag) => tag ? tags.find(t => t.tag.toLowerCase() == tag.toLowerCase()) ?? "" : null
+const findTag = (tag) => tag ? tags.find(t => t.tag.toLowerCase() == tag.toLowerCase()) ?? null : null;
 
 /** @param {Discord.Message} msg */
 function runTag(msg) {
@@ -22,13 +22,13 @@ function runTag(msg) {
   const randomChannels = msg.guild ? msg.guild.channels.cache.filter(c => c.isTextBased() && !c.isThread() && !c.permissionOverwrites?.cache.get(msg.guild?.id ?? "")?.deny?.has("ViewChannel")).map(c => c.toString()) : ["Here"];
   const tag = findTag(cmd?.command);
   const files = [];
-  const target = msg.mentions?.members?.first();
+  let target = msg.mentions?.members?.first() || msg.mentions?.users?.first();
   if (tag) {
     let response = tag.response;
     if (response) {
       const regex = /<@random ?\[(.*?)\]>/gm;
       if (regex.test(response)) {
-        const replace = (str) => u.rand(str.replace(regex, '$1').split('|'));
+        const replace = (/** @type {string} */ str) => u.rand(str.replace(regex, '$1').split('|'));
         response = response.replace(regex, replace);
       }
       response = response.replace(/<@author>/ig, msg.author.toString())
@@ -36,6 +36,7 @@ function runTag(msg) {
         .replace(/<@channel>/ig, msg.channel.toString())
         .replace(/<@randomchannel>/, u.rand(randomChannels) ?? msg.channel.toString());
       if ((/(<@target>)|(<@targetname>)/ig).test(response)) {
+        if (!msg.guild) target ??= msg.client.user;
         if (!target) return msg.reply("You need to `@mention` a user with that command!").then(u.clean);
         response = response.replace(/<@target>/ig, target.toString())
           .replace(/<@targetname>/ig, target.displayName);
@@ -44,7 +45,7 @@ function runTag(msg) {
     if (tag.attachment) {
       files.push(u.attachment.setFile(tag.attachment));
     }
-    const users = target ? [target.id] : []
+    const users = target ? [target.id] : [];
     users.push(msg.author.id);
     msg.channel.send({ content: response ?? undefined, files, allowedMentions: { users } });
   }
@@ -81,12 +82,12 @@ const Module = new Augur.Module()
         .setTitle("Tag created")
         .setDescription(`${int.member} added the tag "${name}"`);
       try {
-        if (command.response) embed.addFields({name: "Response", value: command.response});
+        if (command.response) embed.addFields({ name: "Response", value: command.response });
         if (command.attachment) embed.setImage(command.attachment);
         int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [embed] });
         int.reply({ embeds: [embed.setDescription('')], ephemeral: true });
       } catch (error) {
-        int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [embed.addFields({name: "Error", value: "The preview was too long to send."})] });
+        int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [embed.addFields({ name: "Error", value: "The tag creation preview was too long to send." })] });
         int.reply({ content: `I saved the tag \`${name}\`, but I wasn't able to send you the preview`, ephemeral: true });
       }
     }
@@ -96,13 +97,13 @@ const Module = new Augur.Module()
       const attachment = int.options.getAttachment('attachment');
       const currentTag = findTag(name);
       if (!currentTag) return int.reply({ content: `"Looks like that tag doesn't exist. Use </tag list:${sf.commands.slashTag}> for a list of tags."`, ephemeral: true });
-      if (!response && !attachment) return int.reply({ content: "I need either a response or a file.", ephemeral: true });
+      if (!response && !attachment) return int.reply({ content: `I need a response, a file, or both. If you want to delete the tag, use </tag delete:<${sf.commands.slashTag}>.`, ephemeral: true });
       const command = await u.db.tags.modifyTag({
         tag: name,
-        response,
-        attachment: attachment?.name ?? null
+        response: response ?? undefined,
+        attachment: attachment?.name ?? undefined
       });
-      if (!command) return int.reply({ content: "I wasn't able to save that. Please try again later or contact a dev to see what went wrong.", ephemeral: true });
+      if (!command) return int.reply({ content: "I wasn't able to update that. Please try again later or contact a dev to see what went wrong.", ephemeral: true });
       tags.set(command.tag, command);
       const embed = u.embed({ author: int.member })
         .setTitle("Tag modified")
@@ -110,20 +111,20 @@ const Module = new Augur.Module()
       try {
         if (command.response != currentTag.response) {
           embed.addFields(
-            {name: "Old Response", value: currentTag.response ?? 'None'},
-            {name: "New Response", value: command.response ?? 'None'}
+            { name: "Old Response", value: currentTag.response ?? 'None' },
+            { name: "New Response", value: command.response ?? 'None' }
           );
         }
         if (command.attachment != currentTag.attachment) {
           embed.addFields(
-            {name: "Old File", value: `${currentTag.attachment ? `[Old](${command.attachment})` : 'None'}`},
-            {name: "New File", value: `${command?.attachment ? `[New](${command.attachment})` : 'None'}`}
+            { name: "Old File", value: `${currentTag.attachment ? `[Old](${command.attachment})` : 'None'}` },
+            { name: "New File", value: `${command?.attachment ? `[New](${command.attachment})` : 'None'}` }
           );
         }
         int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [embed] });
         int.reply({ embeds: [embed.setDescription("")], ephemeral: true });
       } catch (error) {
-        int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [u.embed({ author: int.member }).addField("Error", "The preview was too long to send")] });
+        int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [u.embed({ author: int.member }).addFields({ name: "Error", value: "The tag change preview was too long to send" })] });
         int.reply({ content: `I saved the tag \`${name}\`, but I wasn't able to send you the preview`, ephemeral: true });
       }
     }
@@ -131,13 +132,19 @@ const Module = new Augur.Module()
       const name = int.options.getString('name', true).toLowerCase();
       if (!findTag(name)) return int.reply({ content: `"Looks like that tag doesn't exist. Use </tag list:${sf.commands.slashTag}> for a list of tags."`, ephemeral: true });
       const command = await u.db.tags.deleteTag(name);
-      const embed = u.embed({ author: int.member })
-        .setTitle("Tag Deleted")
-        .setDescription(`${int.member} removed the tag "${name}"`);
-      if (command?.response) embed.addFields({name: "Response", value: command.response});
-      if (command?.attachment) embed.setImage(command.attachment);
-      int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [embed] });
-      int.reply({ embeds: [embed.setDescription("")], ephemeral: true });
+      if (!command) return int.reply({ content: "I wasn't able to delete that. Please try again later or contact a dev to see what went wrong.", ephemeral: true });
+      try {
+        const embed = u.embed({ author: int.member })
+          .setTitle("Tag Deleted")
+          .setDescription(`${int.member} removed the tag "${name}"`);
+        if (command.response) embed.addFields({ name: "Response", value: command.response });
+        if (command.attachment) embed.setImage(command.attachment);
+        int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [embed] });
+        int.reply({ embeds: [embed.setDescription("")], ephemeral: true });
+      } catch (err) {
+        int.client.channels.cache.get(sf.channels.modlogs)?.send({ embeds: [u.embed({ author: int.member }).addFields({ name: "Error", value: "The tag deletion preview was too long to send" })] });
+        int.reply({ content: `I deleted the tag \`${name}\`, but I wasn't able to send you the preview`, ephemeral: true });
+      }
       tags.delete(name);
     }
     async function placeholders() {
@@ -167,6 +174,7 @@ const Module = new Augur.Module()
     }
     async function listTags() {
       const list = Array.from(tags.values()).map(c => u.config.prefix + c.tag).sort();
+      // get a multi embed thing going like!help does
       const embed = u.embed()
         .setTitle("Custom tags in LDSG")
         .setThumbnail(int.client.guilds.cache.get(u.sf.ldsg)?.iconURL() ?? null)
@@ -176,9 +184,9 @@ const Module = new Augur.Module()
   }
 })
 .addEvent("messageCreate", async (msg) => { if (!msg.author.bot) return runTag(msg); })
-.addEvent("messageUpdate", async (oldMsg, msg) => { 
+.addEvent("messageUpdate", async (oldMsg, msg) => {
   if (msg.partial) msg = await msg.fetch();
-  if (!msg.author?.bot) return runTag(msg); 
+  if (!msg.author?.bot) return runTag(msg);
 })
 .setInit(async () => {
   try {

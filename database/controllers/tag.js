@@ -1,34 +1,25 @@
 // @ts-check
-const mongoose = require('mongoose')
 const Tag = require("../models/Tag.model");
-
-/**
- * @typedef {mongoose.Document<unknown, {}, { tag: string; response?: string | undefined; attachment?: string | undefined; }> & { tag: string; response?: string | undefined; attachment?: string | undefined;}} docTag
- */
 
 /**
  * @typedef tag
  * @property {string} tag the tag name
- * @property {string | undefined?} response the tag response
- * @property {string | undefined?} attachment the tag file name
+ * @property {string} [response] the tag response
+ * @property {string} [attachment] the tag file name
  */
 
 module.exports = {
   /**
    * Fetch all tags
+   * @returns {Promise<tag[]>}
    */
   fetchAllTags: async function() {
     return Tag.find({}).exec();
   },
   /**
-   * Fetch all tags in a guild
-   */
-  fetchAllGuildTags: async function() {
-    return await Tag.find();
-  },
-  /**
    * Add a tag to the database
    * @param {tag} data tag data
+   * @returns {Promise<tag | null>}
    */
   addTag: async function(data) {
     if (await Tag.exists({ tag: data.tag })) return null;
@@ -37,6 +28,7 @@ module.exports = {
   /**
    * Modify a tag
    * @param {tag} data tag data
+   * @returns {Promise<tag | null>}
    */
   modifyTag: async function(data) {
     if (!await Tag.exists({ tag: data.tag })) return null;
@@ -45,6 +37,7 @@ module.exports = {
   /**
    * Delete a tag
    * @param {string} tag the tag to delete
+   * @returns {Promise<tag | null>}
    */
   deleteTag: async function(tag) {
     if (!await Tag.exists({ tag })) return null;

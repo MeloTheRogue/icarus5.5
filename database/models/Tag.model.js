@@ -4,7 +4,7 @@ const mongoose = require('mongoose'),
   Schema = mongoose.Schema;
 
 const TagSchema = new Schema({
-  tag: {type: String, required: true},
+  tag: { type: String, required: true },
   response: String,
   attachment: String
 });

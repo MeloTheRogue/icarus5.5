@@ -19,7 +19,7 @@ const { nanoid } = require("nanoid");
  */
 
 /**
- * @typedef { db.tags.docTag } docTag
+ * @typedef { db.tags.tag } tag
  */
 
 /**
@@ -212,7 +212,7 @@ const utils = {
   customId: nanoid,
 
   /**
-   * Shortcut to 
+   * Shortcut to database
    */
   db: db,
   /**

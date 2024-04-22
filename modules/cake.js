@@ -66,10 +66,11 @@ async function testBirthdays(testMember, testDate) {
         if (checkDate(date, now, false)) {
           const member = guild.members.cache.get(birthday.discordId);
           celebrating.push(member);
-          const msgs = birthdayLangs.map(lang => member?.send(u.rand(flair) + lang));
-          Promise.all(msgs).then(() => {
-            member?.send(":birthday: :confetti_ball: :tada: A very happy birthday to you, from LDS Gamers! :tada: :confetti_ball: :birthday:").catch(u.noop);
-          }).catch(u.noop);
+          // const msgs = birthdayLangs.map(lang => member?.send(u.rand(flair) + lang));
+          // Promise.all(msgs).then(() => {
+          // member?.send(":birthday: :confetti_ball: :tada: A very happy birthday to you, from LDS Gamers! :tada: :confetti_ball: :birthday:").catch(u.noop);
+          u.testingSend(Module.client, ":birthday: :confetti_ball: :tada: A very happy birthday to you, from LDS Gamers! :tada: :confetti_ball: :birthday:").catch(u.noop);
+          // }).catch(u.noop);
         }
       } catch (e) { u.errorHandler(e, `Birthday Send - Discord Id: ${birthday.discordId}`); continue; }
     }

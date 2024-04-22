@@ -1,8 +1,8 @@
 // @ts-check
 const Augur = require("augurbot-ts"),
   Discord = require("discord.js"),
-  { ActionRowBuilder, ButtonBuilder } = require('discord.js');
-const { ButtonStyle } = require("discord.js");
+  u = require('../utils/utils'),
+  { ButtonStyle } = require("discord.js");
 
 const dict = {
   "ᔑ": "a",
@@ -61,16 +61,15 @@ async function handleMessage(msg) {
     return;
   }
 
-  const row = new ActionRowBuilder()
+  const row = u.MsgActionRow()
   .addComponents(
-    new ButtonBuilder()
+    new u.Button()
       .setCustomId('sgaTranslate')
       .setLabel('Translate')
       .setStyle(ButtonStyle.Primary),
   );
 
   return await msg.reply({
-    // @ts-ignore
     components: [row]
   });
 }

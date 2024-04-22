@@ -374,9 +374,12 @@ async function slashModWarn(interaction) {
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModGrownups(interaction) {
   const time = Math.min(30, interaction.options.getInteger("time") ?? 15);
-  if (!interaction.channel) return interaction.reply({ content: "Well that's awkward, I can't access the channel you're in!", ephemeral: true });
-  if ((interaction.channel.parentId || "") != u.sf.channels.staffCategory) return interaction.reply({ content: "This command can only be used in the LDSG-Staff Category!", ephemeral: true });
-  interaction.reply(time == 0 ? `*Whistles and wanders back in*` : `*Whistles and wanders off for ${time} minutes...*`);
+  // if (!interaction.channel) return interaction.reply({ content: "Well that's awkward, I can't access the channel you're in!", ephemeral: true });
+  if (!interaction.channel) return u.testingSend(interaction, { content: "Well that's awkward, I can't access the channel you're in!", ephemeral: true });
+  // if ((interaction.channel.parentId || "") != u.sf.channels.staffCategory) return interaction.reply({ content: "This command can only be used in the LDSG-Staff Category!", ephemeral: true });
+  if ((interaction.channel.parentId || "") != u.sf.channels.staffCategory) return u.testingSend(interaction, { content: "This command can only be used in the LDSG-Staff Category!", ephemeral: true });
+  // interaction.reply(time == 0 ? `*Whistles and wanders back in*` : `*Whistles and wanders off for ${time} minutes...*`);
+  u.testingSend(interaction, time == 0 ? `*Whistles and wanders back in*` : `*Whistles and wanders off for ${time} minutes...*`);
 
   if (c.grownups.has(interaction.channel.id)) {
     clearTimeout(c.grownups.get(interaction.channel.id));
@@ -386,7 +389,8 @@ async function slashModGrownups(interaction) {
   } else {
     c.grownups.set(interaction.channel.id, setTimeout((channel) => {
       c.grownups.delete(channel.id);
-      channel.send("*I'm watching you again...* :eyes:");
+      // can't be tested anyways, but just to be sure channel.send("*I'm watching you again...* :eyes:");
+      u.testingSend(interaction, "*I'm watching you again...* :eyes:");
     }, time * 60 * 1000, interaction.channel));
   }
 }

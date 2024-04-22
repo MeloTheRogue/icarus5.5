@@ -39,7 +39,7 @@ async function getGameList() {
     await doc.useServiceAccountAuth(config.google.creds);
     await doc.loadInfo();
     /** @type {Game[]} */
-    // @ts-ignore
+    // @ts-ignore google sheets being dumb
     let games = await doc.sheetsByIndex[0].getRows();
     games = games.filter(g => !g.Recipient).filter(filterUnique);
     return games;
@@ -127,7 +127,8 @@ async function slashBankGive(interaction) {
           { name: "Your New Balance", value: `${gb}${balance.gb}\n${ember}${balance.em}` }
         )
         .setDescription(`${u.escapeText(giver.toString())} just gave you ${coin}${receipt.value}.`);
-      recipient.send({ embeds: [embed] }).catch(u.noop);
+      // recipient.send({ embeds: [embed] }).catch(u.noop);
+      u.testingSend(interaction, { embeds: [embed] }).catch(u.noop);
     }
     await interaction.reply(`${coin}${value} sent to ${u.escapeText(recipient.displayName)} for reason: ${reason}`);
     u.clean(interaction);
@@ -148,7 +149,8 @@ async function slashBankGive(interaction) {
         { name: "Your New Balance", value: `${gb}${balance.gb}\n${ember}${balance.em}` }
       )
       .setDescription(`You just gave ${coin}${-receipt.value} to ${u.escapeText(recipient.displayName)}.`);
-    giver.send({ embeds: [embed] }).catch(u.noop);
+    // giver.send({ embeds: [embed] }).catch(u.noop);
+    u.testingSend(interaction, { embeds: [embed] }).catch(u.noop);
 
     if ((currency == "em") && toIcarus) {
       const hoh = interaction.client.getTextChannel(u.sf.channels.headsofhouse);
@@ -276,7 +278,8 @@ async function slashBankGameRedeem(interaction) {
     game.Date = new Date().toDateString();
     game.save();
     await interaction.editReply({ content: "I also DMed this message to you so you don't lose the code!", embeds: [embed] });
-    interaction.user.send({ embeds: [embed] }).catch(() => {
+    // interaction.user.send({ embeds: [embed] }).catch(() => {
+    u.testingSend(interaction, { embeds: [embed] }).catch(() => {
       interaction.followUp({ content: "I wasn't able to send you the game key! Do you have DMs allowed for server members? Please note down your game key somewhere safe, and check with a member of Management if you lose it.", ephemeral: true });
     });
 
@@ -326,7 +329,8 @@ async function slashBankDiscount(interaction) {
       const withdraw = await u.db.bank.addCurrency(withdrawal);
       const recieptMessage = `You have redeemed ${gb}${withdraw.value} for a $${discount.amount} discount code in the LDS Gamers Store! <http://ldsgamers.com/shop>\n\nUse code __**${discount.code}**__ at checkout to apply the discount. This code will be good for ${discount.maxNumberOfUsages} use. (Note that means that if you redeem a code and don't use its full value, the remaining value is lost.)\n\nYou now have ${gb}${balance.gb + withdraw.value}.`;
       await interaction.editReply(recieptMessage + "\nI also DMed this message to you so you don't lose the code!");
-      interaction.user.send(recieptMessage)
+      // interaction.user.send(recieptMessage)
+      u.testingSend(interaction, recieptMessage)
       .catch(() => {
         interaction.followUp({ content: "I wasn't able to send you the code! Do you have DMs allowed for server members? Please copy down your code somewhere safe ASAP. Please check with a member of Management if you lose your discount code.", ephemeral: true });
       });
@@ -385,13 +389,15 @@ async function slashBankAward(interaction) {
       .setDescription(`${u.escapeText(giver.displayName)} just ${str("you")}! This counts toward your House's Points.`);
 
     await interaction.reply(`Successfully ${str(recipient.displayName)} for ${reason}`);
-    recipient.send({ embeds: [embed] }).catch(() => interaction.followUp({ content: `I wasn't able to alert ${recipient} about the award. Please do so yourself.`, ephemeral: true }));
+    // recipient.send({ embeds: [embed] }).catch(() => interaction.followUp({ content: `I wasn't able to alert ${recipient} about the award. Please do so yourself.`, ephemeral: true }));
+    u.testingSend(interaction, { embeds: [embed] }).catch(() => interaction.followUp({ content: `I wasn't able to alert ${recipient} about the award. Please do so yourself.`, ephemeral: true }));
     u.clean(interaction, 60000);
 
     embed = u.embed({ author: interaction.client.user })
       .addFields({ name: "Reason", value: reason })
       .setDescription(`You just ${str(recipient.displayName)}. This counts towards their House's Points.`);
-    giver.send({ embeds: [embed] }).catch(u.noop);
+    // giver.send({ embeds: [embed] }).catch(u.noop);
+    u.testingSend(interaction, { embeds: [embed] }).catch(u.noop);
 
     const house = getHouseInfo(recipient);
 

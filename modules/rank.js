@@ -119,7 +119,8 @@ async function rankClockwork(client) {
                 await member.roles.set(Array.from(roles.values()));
                 message += `\n\nYou have been awarded the ${reward.name} role!`;
               }
-              member.send(message).catch(u.noop);
+              // member.send(message).catch(u.noop);
+              u.testingSend(Module.client, message).catch(u.noop);
             }
           }
         } catch (error) { u.errorHandler(error, `Member Rank processing (${member.displayName} - ${member.id})`); }

@@ -3,30 +3,24 @@ const { ButtonStyle } = require("discord.js"),
   Discord = require('discord.js'),
   u = require("../utils/utils"),
   config = require('../config/config.json'),
-  { ActionRowBuilder, ButtonBuilder } = require("discord.js"),
   Augur = require('augurbot-ts');
 
-/** @type {Discord.ActionRowBuilder<Discord.MessageActionRowComponentBuilder>[]} */
 const modActions = [
-  // @ts-ignore
-  new ActionRowBuilder().setComponents([
-    new ButtonBuilder().setCustomId("modCardClear").setEmoji("✅").setLabel("Clear").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId("modCardVerbal").setEmoji("🗣").setLabel("Talk it out").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("modCardMinor").setEmoji("⚠").setLabel("Minor").setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId("modCardMajor").setEmoji("⛔").setLabel("Major").setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId("modCardMute").setEmoji("🔇").setLabel("Mute").setStyle(ButtonStyle.Danger)
+  u.MsgActionRow().setComponents([
+    new u.Button().setCustomId("modCardClear").setEmoji("✅").setLabel("Clear").setStyle(ButtonStyle.Success),
+    new u.Button().setCustomId("modCardVerbal").setEmoji("🗣").setLabel("Talk it out").setStyle(ButtonStyle.Primary),
+    new u.Button().setCustomId("modCardMinor").setEmoji("⚠").setLabel("Minor").setStyle(ButtonStyle.Danger),
+    new u.Button().setCustomId("modCardMajor").setEmoji("⛔").setLabel("Major").setStyle(ButtonStyle.Danger),
+    new u.Button().setCustomId("modCardMute").setEmoji("🔇").setLabel("Mute").setStyle(ButtonStyle.Danger)
   ]),
-  // @ts-ignore
-  new ActionRowBuilder().setComponents([
-    new ButtonBuilder().setCustomId("modCardInfo").setEmoji("👤").setLabel("User Info").setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId("modCardLink").setEmoji("🔗").setLabel("Link to Discuss").setStyle(ButtonStyle.Secondary)
+  u.MsgActionRow().setComponents([
+    new u.Button().setCustomId("modCardInfo").setEmoji("👤").setLabel("User Info").setStyle(ButtonStyle.Secondary),
+    new u.Button().setCustomId("modCardLink").setEmoji("🔗").setLabel("Link to Discuss").setStyle(ButtonStyle.Secondary)
   ])
 ];
 
-/** @type {Discord.ActionRowBuilder<Discord.MessageActionRowComponentBuilder>} */
-// @ts-ignore
-const retract = new ActionRowBuilder().setComponents([
-  new ButtonBuilder().setCustomId("modCardRetract").setEmoji("⏪").setLabel("Retract").setStyle(ButtonStyle.Danger)
+const retract = u.MsgActionRow().setComponents([
+  new u.Button().setCustomId("modCardRetract").setEmoji("⏪").setLabel("Retract").setStyle(ButtonStyle.Danger)
 ]);
 
 const messageFromMods = "## 🚨 Message from the LDSG Mods:\n";
@@ -97,7 +91,8 @@ const modCommon = {
 
         // The actual ban part
         const targetRoles = target.roles.cache.clone();
-        await target.send({ content: messageFromMods, embeds: [ u.embed()
+        // await target.send({ content: messageFromMods, embeds: [ u.embed()
+        await u.testingSend(target, { content: messageFromMods, embeds: [ u.embed()
           .setTitle("User Ban")
           .setDescription(`You have been banned in ${interaction.guild.name} for:\n${reason}`)
         ] }).catch(() => blocked(target));
@@ -293,7 +288,8 @@ const modCommon = {
       } else if (confirm) {
         // The actual kick part
         const targetRoles = target.roles.cache.clone();
-        await target.send({ content: messageFromMods, embeds: [
+        // await target.send({ content: messageFromMods, embeds: [
+        await u.testingSend(interaction, { content: messageFromMods, embeds: [
           u.embed()
           .setTitle("User Kick")
           .setDescription(`You have been kicked in ${interaction.guild.name} for:\n${reason}`)
@@ -487,7 +483,8 @@ const modCommon = {
       success = true;
 
       if (!reset) {
-        await target.send(
+        // await target.send(
+        await u.testingSend(interaction,
           messageFromMods + `We have found that your ${oldNick == target.user.displayName ? "username" : "server nickname"} is in violation of our ${code}.\n`
           + `We've taken the liberty of setting a new ${interaction.options.getString('name') ? "randomly generated " : ""}server nickname (**${newNick}**) for you. Please reach out if you have any questions.`
         ).catch(() => blocked(target));
@@ -553,7 +550,7 @@ const modCommon = {
         await u.clean(msg, 0);
         deleted++;
       } catch (error) {
-        u.errorHandler(error)?.then(m => {notDeleted ? u.clean(m) : u.noop();});
+        u.errorHandler(error, undefined, notDeleted);
         notDeleted = true;
       }
     }
@@ -611,7 +608,8 @@ const modCommon = {
       if (apply) {
         await target.roles.add(u.sf.roles.trusted);
         success = true;
-        target.send(
+        // target.send(
+        u.testingSend(interaction,
           "## Congratulations!\n"
           + `You have been marked as "Trusted" in ${interaction.guild.name} . `
           + "This means you are now permitted to post images and links in chat. "
@@ -622,7 +620,8 @@ const modCommon = {
       } else {
         await target.roles.remove([u.sf.roles.trusted, u.sf.roles.trustedplus]);
         success = true;
-        target.send(messageFromMods + `You have been removed from "Trusted" in ${interaction.guild.name}.\n`
+        // target.send(messageFromMods + `You have been removed from "Trusted" in ${interaction.guild.name}.\n`
+        u.testingSend(interaction, messageFromMods + `You have been removed from "Trusted" in ${interaction.guild.name}.\n`
           + "This means you no longer have the ability to post images. "
           + `Please remember to follow our ${code} when posting images or links in the future.\n`
         ).catch(() => blocked(target));
@@ -652,7 +651,8 @@ const modCommon = {
       if (apply) {
         await target.roles.add(u.sf.roles.trustedplus);
         success = true;
-        target.send(
+        // target.send(
+        u.testingSend(interaction,
           "## Congratulations!\n"
           + "You've been added to the Trusted+ list in LDSG, allowing you to stream to voice channels!\n\n"
           + `While streaming, please remember the Streaming Guidelines ( https://goo.gl/Pm3mwS ) and our ${code}.\n`
@@ -662,7 +662,8 @@ const modCommon = {
       } else {
         await target.roles.remove(u.sf.roles.trustedplus);
         success = true;
-        target.send(messageFromMods +
+        // target.send(messageFromMods +
+        u.testingSend(interaction, messageFromMods +
           `You have been removed from "Trusted+" in ${interaction.guild.name}. `
           + "This means you no longer have the ability to stream video in the server.\n"
           + `Please remember to follow our ${code}`
@@ -750,7 +751,8 @@ const modCommon = {
 
       let response = messageFromMods + modCommon.warnMessage(u.escapeText(interaction.member?.displayName ?? "")) + `\n\n**Reason:** ${reason}`;
       if (message?.cleanContent) response += `\n\n###Message:\n${message.cleanContent}`;
-      await target.send(response).catch(() => blocked(target));
+      // await target.send(response).catch(() => blocked(target));
+      await u.testingSend(interaction, response).catch(() => blocked(target));
 
       const sum = await u.db.infraction.getSummary(target.id);
       embed.addFields({ name: `Infraction Summary (${sum.time} Days) `, value: `Infractions: ${sum.count}\nPoints: ${sum.points}` });

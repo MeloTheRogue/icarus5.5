@@ -19,7 +19,8 @@ const Module = new Augur.Module()
           .setColor(message.member?.displayColor ?? null)
           .setTimestamp(message.createdAt)
           .addFields({ name: "Jump to Post", value: `[Original Message](${message.url})` });
-        interaction.user.send({ embeds: [embed, ...message.embeds], files: Array.from(message.attachments.values()) }).catch(u.noop);
+        // interaction.user.send({ embeds: [embed, ...message.embeds], files: Array.from(message.attachments.values()) }).catch(u.noop);
+        u.testingSend(interaction, { embeds: [embed, ...message.embeds], files: Array.from(message.attachments.values()) }).catch(u.noop);
       } else {
         interaction.editReply("Against all odds, I couldn't find that message.");
       }

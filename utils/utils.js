@@ -1,9 +1,7 @@
+// @ts-check
 const Discord = require("discord.js"),
   { escapeMarkdown, ComponentType } = require('discord.js'),
   sf = require("../config/snowflakes.json"),
-  // TESTING SNOWFLAKES NEED TO BE DOUBLE CHECKED
-  // not sure if all are updated
-  // 2/18/24
   tsf = require("../config/snowflakes-testing.json"),
   csf = require("../config/snowflakes-testing-commands.json"),
   db = require("../database/dbControllers.js"),
@@ -14,7 +12,7 @@ const { nanoid } = require("nanoid");
 
 /**
  * @typedef {Object} ParsedInteraction
- * @property {String} command - The command issued, represented as a string.
+ * @property {String | null} command - The command issued, represented as a string.
  * @property {Array} data - Associated data for the command, such as command options or values selected.
  */
 
@@ -35,12 +33,12 @@ function parseInteraction(int) {
     if (sc) command += sc;
     return {
       command,
-      data: int.options.data
+      data: [...int.options.data]
     };
   } else if (int.isContextMenuCommand()) {
     return {
       command: (int.isUserContextMenuCommand() ? "User" : "Message") + " Context " + int.commandName,
-      data: int.options.data
+      data: [...int.options.data]
     };
   } else if (int.isMessageComponent()) {
     const data = [
@@ -56,19 +54,35 @@ function parseInteraction(int) {
       });
     }
     return { command: null, data };
+  } else {
+    // Modal is the only one left
+    const data = [
+      {
+        name: "Type",
+        value: "Modal"
+      },
+      {
+        name: "Value(s)",
+        value: int.fields.fields.map(f => `id: ${f.customId}, value: ${f.value}`)
+      }
+    ];
+    return { command: null, data };
   }
 }
 
 const utils = {
   /**
+   * TEMPORARY FOR TESTING I5.5 LIVE. REPLACES msg.channel.send and msg.reply. make a note of which it changes.
+   */
+  testingSend: (msg, payload) => msg.client.getPublicThread(utils.sf.channels.announcements)?.send(payload),
+  /**
    * If a command is run in a channel that doesn't want spam, returns #bot-lobby so results can be posted there.
    * @param {Discord.Message} msg The Discord message to check for bot spam.
    */
   botSpam: function(msg) {
-    if (msg.guild?.id === utils.sf.ldsg && // Is in server
-      msg.channel.id !== utils.sf.channels.botspam && // Isn't in bot-lobby
-      msg.channel.id !== utils.sf.channels.bottesting && // Isn't in Bot Testing
-      msg.channel.parentID !== utils.sf.channels.staffCategory) { // Isn't in the moderation category
+    if (msg.inGuild() && msg.guild?.id === utils.sf.ldsg && // Is in server
+      ![utils.sf.channels.botspam, utils.sf.channels.bottesting].includes(msg.channelId) && // Isn't in the correct channel
+      msg.channel.parentId !== utils.sf.channels.staffCategory) { // Isn't in the staff category
 
       msg.reply(`I've placed your results in <#${utils.sf.channels.botspam}> to keep things nice and tidy in here. Hurry before they get cold!`)
         .then(utils.clean);
@@ -79,187 +93,157 @@ const utils = {
   },
   /**
    * After the given amount of time, attempts to delete the message.
-   * @param {Discord.Message|Discord.APIMessage|Discord.BaseInteraction} msg The message to delete.
+   * @param {Discord.Message|Discord.Interaction} msg The message to delete.
    * @param {number} t The length of time to wait before deletion, in milliseconds.
    */
   clean: async function(msg, t = 20000) {
+    if (msg instanceof Discord.AutocompleteInteraction) return;
     await utils.wait(t);
-    if (msg instanceof Discord.CommandInteraction) {
+    if ("deleteReply" in msg) {
+      if (msg.ephemeral || !msg.replied) return; // Can't delete ephemeral interactions
       msg.deleteReply().catch(utils.noop);
-    } else if ((msg instanceof Discord.Message) && msg.deletable) {
+    } else if (msg.deletable) {
       msg.delete().catch(utils.noop);
+      return msg;
     }
-    return Promise.resolve(msg);
+    return;
   },
-  /**
-   * After the given amount of time, attempts to delete the interaction.
-   * @param {Discord.BaseInteraction} interaction The interaction to delete.
-   * @param {number} t The length of time to wait before deletion, in milliseconds.
-   */
-  cleanInteraction: async function(interaction, t = 20000) {
-    if (interaction.ephemeral) { return; } // Can't delete ephemeral interactions.
-    await utils.wait(t);
-    interaction.deleteReply();
-  },
-  /**
-   * Shortcut to Discord.Collection. See docs there for reference.
-   */
+  /** * Shortcut to Discord.Collection. See docs there for reference. */
   Collection: Discord.Collection,
-  /** @param {Discord.ActionRowData} data */
-  actionRow: (data) => new Discord.ActionRowBuilder(data),
-  /** @param {Discord.ButtonComponentData} data */
-  button: (data) => new Discord.ButtonBuilder(data),
-  /** @param {Discord.StringSelectMenuComponentData} data */
-  stringSelectMenu: (data) => new Discord.StringSelectMenuBuilder(data),
-  /** @param {Discord.UserSelectMenuComponentData} data */
-  userSelectMenu: (data) => new Discord.UserSelectMenuBuilder(data),
-  /** @param {Discord.RoleSelectMenuComponentData} data */
-  roleSelectMenu: (data) => new Discord.RoleSelectMenuBuilder(data),
-
-
-  /** @param {Discord.ModalComponentData} data */
-  modal: (data) => new Discord.ModalBuilder(data),
-  /** @param {Discord.APITextInputComponent} data */
-  textInput: (data) => new Discord.TextInputBuilder(data),
+  /**
+   * Shortcut to a Message action row component builder
+   * @return {Discord.ActionRowBuilder<Discord.MessageActionRowComponentBuilder>}
+   */
+  MsgActionRow: () => new Discord.ActionRowBuilder(),
+  /**
+   * Shortcut to a Modal action row component builder
+   * @return {Discord.ActionRowBuilder<Discord.ModalActionRowComponentBuilder>}
+   */
+  ModalActionRow: () => new Discord.ActionRowBuilder(),
+  Attachment: Discord.AttachmentBuilder,
+  Button: Discord.ButtonBuilder,
+  SelectMenu: {
+    Channel: Discord.ChannelSelectMenuBuilder,
+    Mentionable: Discord.MentionableSelectMenuBuilder,
+    Role: Discord.RoleSelectMenuBuilder,
+    String: Discord.StringSelectMenuBuilder,
+    User: Discord.UserSelectMenuBuilder
+  },
+  Modal: Discord.ModalBuilder,
+  TextInput: Discord.TextInputBuilder,
   /**
    * Confirm Dialog
    * @function confirmInteraction
-   * @param {Discord.BaseInteraction} interaction The interaction to confirm
+   * @param {Discord.Interaction<Omit<Discord.CacheType, "undefined">>} interaction The interaction to confirm
    * @param {String} prompt The prompt for the confirmation
-   * @returns {Promise<Boolean>}
+   * @returns {Promise<Boolean|null>}
    */
   confirmInteraction: async (interaction, prompt = "Are you sure?", title = "Confirmation Dialog") => {
-    const reply = (interaction.deferred || interaction.replied) ? "editReply" : "reply";
-    const embed = utils.embed({ author: interaction.member ?? interaction.user })
+    if (interaction.isAutocomplete()) return null;
+    const embed = utils.embed({ author: (interaction.inGuild() && interaction.inCachedGuild() ? interaction.member : null) ?? interaction.user })
       .setColor(0xff0000)
       .setTitle(title)
       .setDescription(prompt);
     const confirmTrue = utils.customId(),
       confirmFalse = utils.customId();
 
-    await interaction[reply]({
-      embeds: [embed],
-      components: [
-        new Discord.ActionRowBuilder().addComponents(
-          new Discord.ButtonBuilder().setCustomId(confirmTrue).setEmoji("✅").setLabel("Confirm").setStyle(Discord.ButtonStyle.Success),
-          new Discord.ButtonBuilder().setCustomId(confirmFalse).setEmoji("⛔").setLabel("Cancel").setStyle(Discord.ButtonStyle.Danger)
-        )
-      ],
-      ephemeral: true,
-      content: null
-    });
+    const components = [
+      utils.MsgActionRow().addComponents(
+        new Discord.ButtonBuilder().setCustomId(confirmTrue).setEmoji("✅").setLabel("Confirm").setStyle(Discord.ButtonStyle.Success),
+        new Discord.ButtonBuilder().setCustomId(confirmFalse).setEmoji("⛔").setLabel("Cancel").setStyle(Discord.ButtonStyle.Danger)
+      )
+    ];
 
-    const confirm = await interaction.channel.awaitMessageComponent({
+    if (interaction.replied) await interaction.editReply({ embeds: [embed], components, content: null });
+    else await interaction.reply({ embeds: [embed], components, ephemeral: true });
+
+    const confirm = await interaction.channel?.awaitMessageComponent({
       filter: (button) => button.user.id === interaction.user.id && (button.customId === confirmTrue || button.customId === confirmFalse),
       componentType: ComponentType.Button,
       time: 60000
     }).catch(() => ({ customId: "confirmTimeout" }));
 
-    if (confirm.customId === confirmTrue) return true;
-    else if (confirm.customId === confirmFalse) return false;
+    if (confirm?.customId === confirmTrue) return true;
+    else if (confirm?.customId === confirmFalse) return false;
     else return null;
   },
-  awaitDM: async (msg, user, timeout = 60) => {
-    const message = await user.send({ embeds: [
-      utils.embed()
-      .setTitle("Awaiting Response")
-      .setDescription(msg)
-      .setFooter({ text: `Times out in ${timeout} seconds.` })
-      .setColor("Red")
-    ] });
-
-    const collected = await message.channel.awaitMessages({
-      filter: (m) => !m.content.startsWith("!") && !m.content.startsWith("/"), max: 1,
-      time: timeout * 1000
-    });
-
-    const response = utils.embed()
-      .setTitle("Awaited Response")
-      .setColor("Purple");
-
-    if (collected.size === 0) {
-      await message.edit({ embeds: [
-        response
-        .setDescription(msg)
-        .setFooter({ text: "Timed out. Please see original message." })
-      ] });
-      return null;
-    } else {
-      await message.edit({ embeds: [
-        response
-        .setDescription(`Got your response! Please see original message.\n\`\`\`\n${collected.first()}\n\`\`\``)
-        .addFields({ name: "Original Question", value: msg, inline: false })
-      ] });
-      return collected.first();
-    }
-  },
+  // awaitDm has been removed as we have better ways of doing that now
+  /** Shortcut to databse controllers */
   db: db,
-  /**
-   * Shortcut to nanoid. See docs there for reference.
-   */
+  /** Shortcut to nanoid. See docs there for reference. */
   customId: nanoid,
-  /**
-   * Shortcut to Discord.Util.escapeMarkdown. See docs there for reference.
-   */
+  /** Shortcut to Discord.Util.escapeMarkdown. See docs there for reference. */
   escapeText: escapeMarkdown,
-  attachment: (data) => new Discord.AttachmentBuilder(data),
   /**
    * Returns a MessageEmbed with basic values preset, such as color and timestamp.
-   * @param {any} data The data object to pass to the MessageEmbed constructor.
-   *   You can override the color and timestamp here as well.
+   * You can override the color and timestamp here as well.
+   * @param {Discord.EmbedData|Discord.APIEmbed|Discord.Embed|{author: Discord.GuildMember|Discord.User}} [data] The data object to pass to the MessageEmbed constructor.
    */
   embed: function(data = {}) {
-    if (data?.author instanceof Discord.GuildMember) {
-      data.author = {
-        name: data.author.displayName,
-        iconURL: data.author.user.displayAvatarURL()
-      };
-    } else if (data?.author instanceof Discord.User) {
-      data.author = {
-        name: data.author.username,
-        iconURL: data.author.displayAvatarURL()
-      };
+    /** @type {Discord.EmbedData|Discord.APIEmbed} */
+    let d;
+    if (data instanceof Discord.Embed) {
+      d = data.toJSON();
+    } else {
+      let data2 = {};
+      if (data.author instanceof Discord.GuildMember || data.author instanceof Discord.User) {
+        data.author = { name: data.author.displayName, iconURL: data.author.displayAvatarURL() };
+      }
+      // Yes it has to be this way. Yes I hate it too.
+      data2 = data;
+      d = data2;
     }
-    const embed = new Discord.EmbedBuilder(data);
-    if (!data?.color) embed.setColor(config.color);
-    if (!data?.timestamp) embed.setTimestamp();
+
+    const embed = new Discord.EmbedBuilder(d);
+    if (!d.color) embed.setColor(parseInt(config.color));
+    if (!d.timestamp) embed.setTimestamp();
     return embed;
   },
   /**
    * Handles a command exception/error. Most likely called from a catch.
    * Reports the error and lets the user know.
-   * @param {Error | null} [error] The error to report.
-   * @param {any} message Any Discord.Message, Discord.BaseInteraction, or text string.
+   * @param {Error|string} [error] The error to report.
+   * @param {Discord.Message|Discord.Interaction|string} [message] Any Discord.Message, Discord.BaseInteraction, or text string.
    */
-  errorHandler: function(error, message = null) {
-    if (!error || (error.name === "AbortError")) return;
-
+  errorHandler: function(error, message, clean = true) {
+    if (!error || (error instanceof Error && error.name === "AbortError")) return;
     console.error(Date());
 
-    const embed = utils.embed().setTitle(error?.name?.toString() ?? "Error");
+    const embed = utils.embed().setTitle(error instanceof Error ? error?.name?.toString() ?? "Error" : error);
 
     if (message instanceof Discord.Message) {
-      const loc = (message.guild ? `${message.guild?.name} > ${message.channel?.name}` : "DM");
+      const loc = (message.inGuild() ? `${message.guild?.name} > ${message.channel?.name}` : "DM");
       console.error(`${message.author.username} in ${loc}: ${message.cleanContent}`);
 
-      message.channel.send("I've run into an error. I've let my devs know.")
-        .then(utils.clean);
+      // message.channel.send("I've run into an error. I've let my devs know.").then(m => {
+      utils.testingSend(message, "I've run into an error. I've let my devs know.").then(m => {
+        if (clean) utils.clean(m);
+      });
       embed.addFields(
         { name: "User", value: message.author.username, inline: true },
         { name: "Location", value: loc, inline: true },
         { name: "Command", value: message.cleanContent || "`undefined`", inline: true }
       );
     } else if (message instanceof Discord.BaseInteraction) {
-      const loc = (message.guild ? `${message.guild?.name} > ${message.channel?.name}` : "DM");
+      const loc = (message.inGuild() ? `${message.guild?.name} > ${message.channel?.name}` : "DM");
       console.error(`Interaction by ${message.user.username} in ${loc}`);
-      if (message.isRepliable() && (message.deferred || message.replied)) message.editReply("I've run into an error. I've let my devs know.").catch(utils.noop).then(utils.clean);
-      else if (message.isRepliable()) message.reply({ content: "I've run into an error. I've let my devs know.", ephemeral: true }).catch(utils.noop).then(utils.clean);
+
+      // alert the user
+      if (!message.isAutocomplete()) {
+        if (message.replied) {
+          message.editReply("I've run into an error. I've let my devs know.").then(m => {
+            if (clean) utils.clean(m);
+          });
+        } else {
+          message.reply({ content: "I've run into an error. I've let my devs know.", ephemeral: true }).catch(utils.noop);
+        }
+      }
       embed.addFields(
         { name: "User", value: message.user?.username, inline: true },
         { name: "Location", value: loc, inline: true }
       );
 
-      const descriptionLines = [message.commandId || message.customId || "`undefined`"];
+      const descriptionLines = [message.isCommand() || message.isAutocomplete() ? message.commandId : message.customId || "`undefined`"];
       const { command, data } = parseInteraction(message);
       if (command) descriptionLines.push(command);
       for (const datum of data) {
@@ -271,20 +255,17 @@ const utils = {
       embed.addFields({ name: "Message", value: message });
     }
 
-    console.trace(error);
+    if (typeof error != 'string') {
+      console.trace(error);
 
-    let stack = (error.stack ? error.stack : error.toString());
-    if (stack.length > 4096) stack = stack.slice(0, 4000);
+      let stack = (error.stack ? error.stack : error.toString());
+      if (stack.length > 4096) stack = stack.slice(0, 4000);
+      embed.setDescription(stack);
+    }
 
-    embed.setDescription(stack);
-    return errorLog.send({ embeds: [embed] });
+    errorLog.send({ embeds: [embed] });
   },
   errorLog,
-  /**
-   * Fetch partial Discord objects
-   * @param {*} obj The Discord object to fetch.
-   */
-  fetchPartial: (obj) => { return obj.fetch(); },
   /**
    * This task is extremely complicated.
    * You need to understand it perfectly to use it.
@@ -337,14 +318,12 @@ const utils = {
    * Convert to a fancier time string
    * @param {Date} time The input time
    * @param {Discord.TimestampStylesString} format The format to display in
-   * @returns {"<t:time:format>"}
+   * @returns {string} "<t:time:format>"
    */
   time: function(time, format = "f") {
     return Discord.time(time, format);
   },
-  /**
-   * Shortcut to snowflakes.json or snowflakes-testing.json depending on if devMode is turned on
-   */
+  /** Shortcut to snowflakes.json or snowflakes-testing.json depending on if devMode is turned on */
   sf: config.devMode ? Object.assign(tsf, csf) : sf,
 
   /**

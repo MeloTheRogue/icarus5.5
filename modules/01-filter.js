@@ -8,7 +8,6 @@ const Augur = require("augurbot-ts"),
   p = require("../utils/perms"),
   c = require("../utils/modCommon");
 
-
 const bannedWords = new RegExp(banned.words.join("|"), "i"),
   hasLink = /(>?(>?http[s]?|ftp):\/\/)?([\w.-]+\.)?([\w.-]+\.[^/\n ]+)(\/[^ \n]+)?/gi;
 
@@ -152,13 +151,15 @@ function processMessageLanguage(msg) {
     } else if (scamLinks.length > 0) {
       // Scam Links
       u.clean(msg, 0);
-      msg.reply({ content: "That link is generally believed to be a scam/phishing site. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      // msg.reply({ content: "That link is generally believed to be a scam/phishing site. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      u.testingSend(msg, { content: "That link is generally believed to be a scam/phishing site. Please be careful!", failIfNotExists: false }).catch(u.noop);
       c.createFlag({ msg, member: msg.member ?? msg.author, matches: scamLinks, flagReason: "Suspected scam links (Auto-Removed)" });
       return true;
     } else if (bannedWords.exec(msg.cleanContent) && matchedLinks.find(l => l.url.includes("tenor") || l.url.includes("giphy"))) {
       // Bad gif link
       u.clean(msg, 0);
-      msg.reply({ content: "Looks like that link might have some harsh language. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      // msg.reply({ content: "Looks like that link might have some harsh language. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      u.testingSend(msg, { content: "Looks like that link might have some harsh language. Please be careful!", failIfNotExists: false }).catch(u.noop);
       c.createFlag({ msg, member: msg.member ?? msg.author, matches: matchedLinks.map(l => (l.tld ?? "") + l.url), flagReason: "Gif Link Language (Auto-Removed)" });
       return true;
     } else if (!msg.webhookId && !msg.author.bot && msg.member && !msg.member.roles.cache.has(u.sf.roles.trusted)) {
@@ -183,13 +184,15 @@ function processMessageLanguage(msg) {
     const preview = [embed.author?.name ?? "", embed.title ?? "", embed.description ?? ""].join("\n").toLowerCase();
     const previewBad = preview.match(bannedWords) ?? [];
     if (previewBad.length > 0) {
-      if (!msg.author.bot) msg.reply({ content: "It looks like that link might have some harsh language in the preview. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      // if (!msg.author.bot) msg.reply({ content: "It looks like that link might have some harsh language in the preview. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      if (!msg.author.bot) u.testingSend(msg, { content: "It looks like that link might have some harsh language in the preview. Please be careful!", failIfNotExists: false }).catch(u.noop);
       c.createFlag({ msg, member: msg.member ?? msg.author, matches: previewBad, flagReason: "Link preview language (Auto-Removed)" });
       u.clean(msg, 0);
       break;
     }
     if (filter(msg, preview)) {
-      if (!msg.author.bot) msg.reply({ content: "It looks like that link might have some language in the preview. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      // if (!msg.author.bot) msg.reply({ content: "It looks like that link might have some language in the preview. Please be careful!", failIfNotExists: false }).catch(u.noop);
+      if (!msg.author.bot) u.testingSend(msg, { content: "It looks like that link might have some language in the preview. Please be careful!", failIfNotExists: false }).catch(u.noop);
       msg.suppressEmbeds().catch(u.noop);
       break;
     }
@@ -217,17 +220,19 @@ function reportInvites(msg, rawInvites, invites) {
       for (const invite of rawInvites) msg.content = msg.content.replace(invite, "[Discord Invite]");
       u.clean(msg, 0);
       const embed = u.embed({ author: msg.author }).setDescription(msg.content);
-      msg.channel.send({ embeds: [embed, ...msg.embeds], files: Array.from(msg.attachments.values()) });
+      // channel send
+      u.testingSend(msg, { embeds: [embed, ...msg.embeds], files: Array.from(msg.attachments.values()) });
       return;
     }
     c.createFlag({ msg, member: msg.member ?? msg.author, matches: external.join("\n"), flagReason: "Automatic Discord invite removal" });
     u.clean(msg, 0);
-    msg.channel.send({ embeds: [
+    // channel send
+    u.testingSend(msg, { embeds: [
       u.embed({
         description: "It is difficult to know what will be in another Discord server at any given time. *If* you feel that this server is appropriate to share, please only do so in direct messages."
       })
     ] })
-    .then(u.clean);
+    ?.then(u.clean);
   }
 }
 
@@ -261,7 +266,8 @@ async function processCardAction(interaction) {
     const flag = interaction.message;
     // Prevent double-processing
     if (processing.has(flag.id)) {
-      interaction.reply({ content: "Someone is already processing this flag!", ephemeral: true });
+      // interaction.reply({ content: "Someone is already processing this flag!", ephemeral: true });
+      u.testingSend(interaction, { content: "Someone is already processing this flag!", ephemeral: true });
       return;
     }
 
@@ -271,11 +277,13 @@ async function processCardAction(interaction) {
       embed = u.embed(flag.embeds[0]),
       infraction = await u.db.infraction.getByFlag(flag.id);
     if (!infraction) {
-      interaction.reply({ content: "I couldn't find that flag!", ephemeral: true });
+      // interaction.reply({ content: "I couldn't find that flag!", ephemeral: true });
+      u.testingSend(interaction, { content: "I couldn't find that flag!", ephemeral: true });
       return processing.delete(flag.id);
     }
     if (mod.id == infraction.discordId) {
-      await interaction.reply({ content: "You can't handle your own flag!", ephemeral: true });
+      // await interaction.reply({ content: "You can't handle your own flag!", ephemeral: true });
+      await u.testingSend(interaction, { content: "You can't handle your own flag!", ephemeral: true });
       return processing.delete(flag.id);
     }
 
@@ -307,13 +315,16 @@ async function processCardAction(interaction) {
     } else if (interaction.customId == "modCardLink") {
       // LINK TO #MODDISCUSSION
       const md = interaction.client.getTextChannel(u.sf.channels.moddiscussion);
-      await interaction.reply({ content: `Sending the flag over to ${md}...`, ephemeral: true });
+      // await interaction.reply({ content: `Sending the flag over to ${md}...`, ephemeral: true });
+      await u.testingSend(interaction, { content: `Sending the flag over to ${md}...`, ephemeral: true });
 
       embed.setFooter({ text: `Linked by ${u.escapeText(mod.displayName)}` });
-      md?.send({ embeds: [embed] }).catch(u.noop);
+      // md?.send({ embeds: [embed] }).catch(u.noop);
+      u.testingSend(interaction, { embeds: [embed] }).catch(u.noop);
     } else if (interaction.customId == "modCardRetract") {
       // Only the person who acted on the card (or someone in management) can retract an action
-      if (infraction.handler != mod.id && !p.calc(interaction.member, ['mgmt'])) return interaction.reply({ content: "That isn't your card to retract!", ephemeral: true });
+      // if (infraction.handler != mod.id && !p.calc(interaction.member, ['mgmt'])) return interaction.reply({ content: "That isn't your card to retract!", ephemeral: true });
+      if (infraction.handler != mod.id && !p.calc(interaction.member, ['mgmt'])) return u.testingSend(interaction, { content: "That isn't your card to retract!", ephemeral: true });
       await interaction.deferUpdate();
       const verbal = embed.data.fields?.find(f => f.value.includes("verbal"));
       const revertedMsg = "The offending message can't be restored" + (infraction.value > 9 ? " and the Muted role may have to be removed and the user unwatched." : ".");
@@ -323,7 +334,8 @@ async function processCardAction(interaction) {
 
       await interaction.editReply({ embeds: [embed], components: c.modActions });
       if (infraction.value > 0 || verbal) {
-        await interaction.guild.members.cache.get(infraction.discordId)?.send(
+        // await interaction.guild.members.cache.get(infraction.discordId)?.send(
+        await u.testingSend(interaction,
           "## Moderation Update:"
           + "\nThe LDSG Mods have retracted their previous decision. It may be that they previously clicked the wrong button or are considering a different outcome."
           + "\nPlease be patient while the mods continue to review your case. If you don't hear anything soon from me or the mods, your case was likely cleared."
@@ -387,7 +399,8 @@ async function processCardAction(interaction) {
             c.warnMessage(mod.displayName)
         );
 
-        member.send({ content: response, embeds: [quote] }).catch(() => c.blocked(member));
+        // member.send({ content: response, embeds: [quote] }).catch(() => c.blocked(member));
+        u.testingSend(interaction, { content: response, embeds: [quote] }).catch(() => c.blocked(member));
       }
 
       const dummy = { value: "" };
@@ -422,13 +435,14 @@ const Module = new Augur.Module()
 .addEvent("interactionCreate", (int) => {
   if (!int.inCachedGuild() || !int.isButton()) return;
   if (!p.calc(int.member, ["mod"])) {
-    int.reply({ content: "You don't have permissions to interact with this flag!", ephemeral: true });
+    // int.reply({ content: "You don't have permissions to interact with this flag!", ephemeral: true });
+    u.testingSend(int, { content: "You don't have permissions to interact with this flag!", ephemeral: true });
     return;
   }
   if (['clear', 'verbal', 'minor', 'major', 'mute', 'info', 'link', 'retract'] // mod card actions minus the modCard part
     .includes(int.customId.replace("modCard", "").toLowerCase())) return processCardAction(int);
 })
-// @ts-ignore
+// @ts-ignore event is emitted in mods.js
 .addEvent("filterUpdate", () => pf = new profanityFilter())
 .addEvent("ready", () => {
   setInterval(() => {

@@ -71,31 +71,35 @@ async function watch(msg, edited = false) {
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction */
 async function slashModWatch(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const target = interaction.options.getMember("user");
   const apply = (interaction.options.getString("action") ?? "true") == "true";
-  if (!target) return interaction.editReply(noTarget);
+  // if (!target) return interaction.editReply(noTarget);
+  if (!target) return u.testingSend(interaction, noTarget);
 
   const watching = await c.watch(interaction, target, apply);
-  return interaction.editReply(watching);
+  // return interaction.editReply(watching);
+  return u.testingSend(interaction, watching);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModBan(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const target = interaction.options.getMember("user");
   const reason = interaction.options.getString("reason", true);
   const days = interaction.options.getInteger("clean") ?? 1;
-  if (!target) return interaction.editReply(noTarget);
+  // if (!target) return interaction.editReply(noTarget);
+  if (!target) return u.testingSend(interaction, noTarget);
 
   const ban = await c.ban(interaction, target, reason, days);
-  return interaction.editReply(ban);
+  // return interaction.editReply(ban);
+  return u.testingSend(interaction, ban);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModFilter(interaction) {
   const pf = new profanityFilter();
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
 
   const word = interaction.options.getString("word", true).toLowerCase().trim();
   const mod = interaction.member;
@@ -104,7 +108,8 @@ async function slashModFilter(interaction) {
 
   const filtered = pf.scan(word);
   if (!p.calc(interaction.member, ["mgr"])) {
-    return interaction.editReply("This command is for Management+ only.");
+    // return interaction.editReply("This command is for Management+ only.");
+    return u.testingSend(interaction, "This command is for Management+ only.");
   }
 
   if (apply) {
@@ -113,54 +118,63 @@ async function slashModFilter(interaction) {
         .setTitle("Word added to the language filter.")
         .setDescription(`${mod} added "${word}" to the language filter.`);
       modLogs?.send({ embeds: [embed] });
-      await interaction.editReply(`"${word}" was added to the language filter.`);
+      // await interaction.editReply(`"${word}" was added to the language filter.`);
+      await u.testingSend(interaction, `"${word}" was added to the language filter.`);
     } else {
-      await interaction.editReply(`"${word}" was already in the language filter.`);
+      // await interaction.editReply(`"${word}" was already in the language filter.`);
+      await u.testingSend(interaction, `"${word}" was already in the language filter.`);
     }
   } else if (pf.remove_word(word)) {
     const embed = u.embed({ author: mod })
       .setTitle("Word removed from language filter.")
       .setDescription(`${mod} removed "${word}" from the language filter.`);
     modLogs?.send({ embeds: [embed] });
-    await interaction.editReply(`"${word}" has been removed from the language filter.`);
+    // await interaction.editReply(`"${word}" has been removed from the language filter.`);
+    await u.testingSend(interaction, `"${word}" has been removed from the language filter.`);
   } else {
-    await interaction.editReply(`"${word}" was not found in the language filter.`);
+    // await interaction.editReply(`"${word}" was not found in the language filter.`);
+    await u.testingSend(interaction, `"${word}" was not found in the language filter.`);
   }
   return Module.client.emit("filterUpdate");
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModSummary(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const member = interaction.options.getMember("user") ?? interaction.member;
   const time = interaction.options.getInteger("history") ?? 28;
 
   const e = await c.getSummaryEmbed(member, time);
-  return interaction.editReply({ embeds: [e] });
+  // return interaction.editReply({ embeds: [e] });
+  return u.testingSend(interaction, { embeds: [e] });
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModKick(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const target = interaction.options.getMember("user");
   const reason = interaction.options.getString("reason") || "Violating the Code of Conduct";
-  if (!target) return interaction.editReply(noTarget);
+  // if (!target) return interaction.editReply(noTarget);
+  if (!target) return u.testingSend(interaction, noTarget);
 
   const kick = await c.kick(interaction, target, reason);
-  return interaction.editReply(kick);
+  // return interaction.editReply(kick);
+  return u.testingSend(interaction, kick);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModMute(interaction) {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
     const target = interaction.options.getMember("user");
     const apply = (interaction.options.getString("action") ?? "true") == "true";
     const reason = interaction.options.getString("reason") || (apply ? "Violating the Code of Conduct" : "Case Closed");
-    if (!target) return interaction.editReply(noTarget);
+    // if (!target) return interaction.editReply(noTarget);
+    if (!target) return u.testingSend(interaction, noTarget);
 
     const mute = await c.mute(interaction, target, reason, apply);
-    return interaction.editReply(mute);
+    // return interaction.editReply(mute);
+    return u.testingSend(interaction, mute);
   } catch (error) {
     return u.errorHandler(error, interaction);
   }
@@ -169,12 +183,13 @@ async function slashModMute(interaction) {
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModNote(interaction) {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
     const target = interaction.options.getMember("user") ?? interaction.options.getUser("user", true);
     const note = interaction.options.getString("note", true);
 
     const noted = await c.note(interaction, target, note);
-    return interaction.editReply(noted);
+    // return interaction.editReply(noted);
+    return u.testingSend(interaction, noted);
   } catch (error) {
     return u.errorHandler(error, interaction);
   }
@@ -183,14 +198,16 @@ async function slashModNote(interaction) {
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModOffice(interaction) {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
     const target = interaction.options.getMember("user");
     const reason = interaction.options.getString("reason") || "No reason provided";
     const apply = (interaction.options.getString("action") ?? "true") == "true";
-    if (!target) return interaction.editReply(noTarget);
+    // if (!target) return interaction.editReply(noTarget);
+    if (!target) return u.testingSend(interaction, noTarget);
 
     const office = await c.office(interaction, target, reason, apply);
-    return interaction.editReply(office);
+    // return interaction.editReply(office);
+    return u.testingSend(interaction, office);
   } catch (error) {
     return u.errorHandler(error, interaction);
   }
@@ -198,14 +215,15 @@ async function slashModOffice(interaction) {
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModPurge(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const number = interaction.options.getInteger("number", true);
   let num = number;
   const reason = interaction.options.getString("reason") ?? "No provided reason";
 
   const channel = interaction.channel;
   if (num > 0 && channel) {
-    await interaction.editReply(`Deleting ${num} messages...`);
+    // await interaction.editReply(`Deleting ${num} messages...`);
+    await u.testingSend(interaction, `Deleting ${num} messages...`);
 
     // Use bulkDelete() first
     while (num > 0) {
@@ -219,7 +237,8 @@ async function slashModPurge(interaction) {
       const fetching = Math.min(num, 50);
       const msgsToDelete = await channel.messages.fetch({ limit: fetching, before: interaction.id }).catch(u.noop);
       if (!msgsToDelete) break;
-      for (const [, msg] of msgsToDelete) await msg.delete().catch(u.noop);
+      // for (const [, msg] of msgsToDelete) await msg.delete().catch(u.noop);
+      for (const [, msg] of msgsToDelete) await u.testingSend(msg, `Purged ${msg.url}`).catch(u.noop);
       num -= msgsToDelete.size;
       if (msgsToDelete.size != fetching) break;
     }
@@ -234,24 +253,27 @@ async function slashModPurge(interaction) {
 
     return await interaction.followUp({ content: `${number - num} messages deleted.`, ephemeral: true });
   } else {
-    return interaction.editReply("You need to provide a number greater than 0");
+    // return interaction.editReply("You need to provide a number greater than 0");
+    return u.testingSend(interaction, "You need to provide a number greater than 0");
   }
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModRename(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const target = interaction.options.getMember("user");
   const reset = interaction.options.getBoolean("reset") ?? false;
-  if (!target) return interaction.editReply(noTarget);
+  // if (!target) return interaction.editReply(noTarget);
+  if (!target) return u.testingSend(interaction, noTarget);
 
   const rename = await c.rename(interaction, target, reset);
-  return interaction.editReply(rename);
+  // return interaction.editReply(rename);
+  return u.testingSend(interaction, rename);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModShowWatchlist(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   c.watchlist = new Set((await u.db.user.getUsers({ watching: true })).map(usr => usr.discordId));
 
   const e = u.embed({ author: interaction.member })
@@ -271,12 +293,13 @@ async function slashModShowWatchlist(interaction) {
 
   e.addFields({ name: 'Members', value: wlStr });
 
-  return await interaction.editReply({ embeds: [e] });
+  // return await interaction.editReply({ embeds: [e] });
+  return await u.testingSend(interaction, { embeds: [e] });
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModSlowmode(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
 
   const duration = interaction.options.getInteger("duration") ?? 10;
   const delay = interaction.options.getInteger("delay") ?? 15;
@@ -292,7 +315,8 @@ async function slashModSlowmode(interaction) {
       molasses.delete(ch.id);
     }
 
-    interaction.editReply("Slowmode deactivated.");
+    // interaction.editReply("Slowmode deactivated.");
+    u.testingSend(interaction, "Slowmode deactivated.");
     await interaction.client.getTextChannel(u.sf.channels.modlogs)?.send({ embeds: [
       u.embed({ author: interaction.member })
         .setTitle("Channel Slowmode")
@@ -321,7 +345,8 @@ async function slashModSlowmode(interaction) {
       durationStr = `for ${duration.toString()} minute${duration > 1 ? 's' : ''}`;
     }
 
-    await interaction.editReply(`${delay}-second slowmode activated ${durationStr}.`);
+    // await interaction.editReply(`${delay}-second slowmode activated ${durationStr}.`);
+    await u.testingSend(interaction, `${delay}-second slowmode activated ${durationStr}.`);
     await interaction.client.getTextChannel(u.sf.channels.modlogs)?.send({ embeds: [
       u.embed({ author: interaction.member })
       .setTitle("Channel Slowmode")
@@ -333,42 +358,48 @@ async function slashModSlowmode(interaction) {
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModTrust(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const member = interaction.options.getMember("user");
   const type = interaction.options.getString("type", true);
   const apply = (interaction.options.getString("action") ?? "true") == "true";
-  if (!member) return interaction.editReply(noTarget);
+  // if (!member) return interaction.editReply(noTarget);
+  if (!member) return u.testingSend(interaction, noTarget);
 
   // evaluate and give appropriate trust level
   let trust = "";
   if (type == 'initial') trust = await c.trust(interaction, member, apply);
   else trust = await c.trustPlus(interaction, member, apply);
-  return interaction.editReply(trust);
+  // return interaction.editReply(trust);
+  return u.testingSend(interaction, trust);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModTimeout(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const member = interaction.options.getMember("user");
   const time = interaction.options.getInteger("time") ?? 15;
   const reason = interaction.options.getString("reason");
-  if (!member) return interaction.editReply(noTarget);
+  // if (!member) return interaction.editReply(noTarget);
+  if (!member) return u.testingSend(interaction, noTarget);
 
   // evaluate and give appropriate trust level
   const timeout = await c.timeout(interaction, member, time, reason ?? undefined);
-  return interaction.editReply(timeout);
+  // return interaction.editReply(timeout);
+  return u.testingSend(interaction, timeout);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashModWarn(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
   const member = interaction.options.getMember("user");
   const reason = interaction.options.getString("reason", true);
   const value = interaction.options.getInteger("value") ?? 1;
-  if (!member) return interaction.editReply(noTarget);
+  // if (!member) return interaction.editReply(noTarget);
+  if (!member) return u.testingSend(interaction, noTarget);
 
   const warn = await c.warn(interaction, reason, value, member);
-  return interaction.editReply(warn);
+  // return interaction.editReply(warn);
+  return u.testingSend(interaction, warn);
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/

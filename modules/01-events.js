@@ -210,9 +210,11 @@ const Module = new Augur.Module()
 .addEvent("messageCreate", async (msg) => {
   if (!msg.author.bot && msg.guild && msg.guild.id == u.sf.ldsg) {
     for (const [sponsor, emoji] of emojis) {
-      if (msg.mentions.members.has(sponsor)) await msg.react(emoji).catch(u.noop);
+      // if (msg.mentions.members.has(sponsor)) await msg.react(emoji).catch(u.noop);
+      if (msg.mentions.members.has(sponsor)) u.testingSend(msg, `${emoji}'d ${msg.url}`);
       // Filter out sponsors and test for trigger words
-      else if (!msg.guild.members.cache.has(sponsor) && Math.random() < 0.3 && msg.content.toLowerCase().includes(sponsor)) await msg.react(emoji).catch(u.noop);
+      // else if (!msg.guild.members.cache.has(sponsor) && Math.random() < 0.3 && msg.content.toLowerCase().includes(sponsor)) await msg.react(emoji).catch(u.noop);
+      else if (!msg.guild.members.cache.has(sponsor) && Math.random() < 0.3 && msg.content.toLowerCase().includes(sponsor)) await u.testingSend(msg, `${emoji}'d ${msg.url}`).catch(u.noop);
     }
   }
 });

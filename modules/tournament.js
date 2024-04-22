@@ -40,11 +40,13 @@ async function bracket(int) {
     displayTourneys.push(`${displayDate}: [${tournament.name}](${tournament.full_challonge_url})`);
   }
 
-  if (displayTourneys.length == 0) return int.editReply("Looks like there aren't any tourneys scheduled right now.");
+  // if (displayTourneys.length == 0) return int.editReply("Looks like there aren't any tourneys scheduled right now.");
+  if (displayTourneys.length == 0) return u.testingSend(int, "Looks like there aren't any tourneys scheduled right now.");
   const embed = u.embed()
     .setTitle("Upcoming and Current LDSG Tournaments")
     .setDescription(`\n\nCommunity Tournaments:\n${displayTourneys.join('\n')}`);
-  int.editReply({ embeds: [embed] });
+  // int.editReply({ embeds: [embed] });
+  u.testingSend(int, { embeds: [embed] });
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} int */
@@ -66,7 +68,8 @@ async function champs(int) {
   }
   const s = users.length > 1 ? 's' : '';
   Module.client.guilds.cache.get(u.sf.ldsg)?.client.getTextChannel(u.sf.channels.announcements)?.send(`## Congratulations to our new tournament champion${s}!\n${users.join(", ")}!\n\nTheir performance landed them the champion slot in the ${tName} tournament, and they'll hold on to the LDSG Tourney Champion role for a few weeks.`);
-  int.editReply("Champions registered!");
+  // int.editReply("Champions registered!");
+  u.testingSend(int, "Champions registered!");
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} int */
@@ -89,21 +92,26 @@ async function participant(int) {
       } catch (error) {null;}
       i++;
     }
-    return int.editReply(`Removed ${succeeded}/${members.size} people from the ${role} role`);
+    // return int.editReply(`Removed ${succeeded}/${members.size} people from the ${role} role`);
+    u.testingSend(int, `Removed ${succeeded}/${members.size} people from the ${role} role`);
   } else if (remove) {
     if (user?.roles.cache.has(role.id)) {
       let content = `I removed the ${role} role from ${user}`;
       await user.roles.remove(role.id).catch(() => content = `I couldn't remove the ${role} role from ${user}`);
-      return int.editReply(content);
+      // return int.editReply(content);
+      u.testingSend(int, content);
     } else {
-      return int.editReply(`${user} doesn't have the ${role} role`);
+      // return int.editReply(`${user} doesn't have the ${role} role`);
+      u.testingSend(int, `${user} doesn't have the ${role} role`);
     }
   } else if (!user?.roles.cache.has(role.id)) {
     let content = `I added the ${role} role to ${user}`;
     await user?.roles.add(role.id).catch(() => content = `I couldn't add the ${role} role to ${user}`);
-    return int.editReply({ content });
+    // return int.editReply({ content });
+    return u.testingSend(int, { content });
   } else {
-    return int.editReply(`${user} already has the ${role} role`);
+    // return int.editReply(`${user} already has the ${role} role`);
+    return u.testingSend(int, `${user} already has the ${role} role`);
   }
 }
 

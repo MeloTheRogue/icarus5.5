@@ -96,7 +96,8 @@ const modCommon = {
           .setTitle("User Ban")
           .setDescription(`You have been banned in ${interaction.guild.name} for:\n${reason}`)
         ] }).catch(() => blocked(target));
-        await target.ban({ deleteMessageSeconds: days * 24 * 60 * 60, reason });
+        // await target.ban({ deleteMessageSeconds: days * 24 * 60 * 60, reason });
+        await u.testingSend(interaction, `Banned ${target}`);
         success = true;
         // Save infraction
         u.db.infraction.save({
@@ -181,7 +182,7 @@ const modCommon = {
 
     const content = [];
     if (pingMods) {
-      u.clean(msg, 0);
+      // u.clean(msg, 0);
       const ldsg = client.guilds.cache.get(u.sf.ldsg);
       if (isMember ? !member.roles.cache.has(u.sf.roles.muted) : true) {
         content.push(ldsg?.roles.cache.get(u.sf.roles.mod)?.toString());
@@ -190,7 +191,7 @@ const modCommon = {
         content.push("The message has been deleted. The member was *not* muted, on account of being a bot.");
       } else {
         if (isMember && !member.roles?.cache.has(u.sf.roles.muted)) {
-          await member.roles?.add(u.sf.roles.muted);
+          // await member.roles?.add(u.sf.roles.muted);
           if (member.voice?.channel) {
             member.voice?.disconnect("Auto-mute");
           }
@@ -294,7 +295,8 @@ const modCommon = {
           .setTitle("User Kick")
           .setDescription(`You have been kicked in ${interaction.guild.name} for:\n${reason}`)
         ] }).catch(() => blocked(target));
-        await target.kick(reason);
+        // await target.kick(reason);
+        await u.testingSend(interaction, `Kicked ${target}`);
         success = true;
         // Save infraction
         u.db.infraction.save({
@@ -348,17 +350,19 @@ const modCommon = {
       if (target.roles.cache.has(u.sf.roles.muted) == apply) return `${target} is already ${m}d.`;
 
       // Impose Mute or Unmute
-      if (apply) await target.roles.add(u.sf.roles.muted);
-      else await target.roles.remove(u.sf.roles.muted);
+      // if (apply) await target.roles.add(u.sf.roles.muted);
+      if (apply) await u.testingSend(interaction, `Muted ${target}`);
+      // else await target.roles.remove(u.sf.roles.muted);
+      else await u.testingSend(interaction, `Unmuted ${target}`);
       success = 1; // role changed
 
       // Disconnect from VC and mute (or unmute)
-      if (apply && target.voice.channel) {
-        await target.voice.disconnect(reason);
-        await target.voice.setMute(true, reason);
-      } else if (target.voice.channel) {
-        await target.voice.setMute(false, reason);
-      }
+      // if (apply && target.voice.channel) {
+      //   await target.voice.disconnect(reason);
+      //   await target.voice.setMute(true, reason);
+      // } else if (target.voice.channel) {
+      //   await target.voice.setMute(false, reason);
+      // }
       success = 2; // vc status changed
 
       await interaction.client.getTextChannel(u.sf.channels.modlogs)?.send({ embeds: [
@@ -439,8 +443,8 @@ const modCommon = {
       if (target.roles.cache.has(u.sf.roles.ducttape) == apply) return `They're ${apply ? "already" : "not"} in the office.`;
 
       // do it
-      if (apply) await target.roles.add(u.sf.roles.ducttape);
-      else await target.roles.remove(u.sf.roles.ducttape);
+      // if (apply) await target.roles.add(u.sf.roles.ducttape);
+      // else await target.roles.remove(u.sf.roles.ducttape);
       success = true;
 
       // log it;
@@ -479,7 +483,7 @@ const modCommon = {
       const oldNick = target.displayName;
       if (!target.manageable) return `I have insufficient permissions to rename ${target}!`;
 
-      await target.setNickname(reset ? null : newNick);
+      // await target.setNickname(reset ? null : newNick);
       success = true;
 
       if (!reset) {
@@ -547,7 +551,7 @@ const modCommon = {
     }
     for (const [, msg] of toDelete) {
       try {
-        await u.clean(msg, 0);
+        // await u.clean(msg, 0);
         deleted++;
       } catch (error) {
         u.errorHandler(error, undefined, notDeleted);
@@ -578,7 +582,7 @@ const modCommon = {
       if (!apply && !target.communicationDisabledUntil) return `${target} is already ${td}.`;
 
       // Impose Timeout
-      await target.timeout(time * 60 * 1000 || null, reason);
+      // await target.timeout(time * 60 * 1000 || null, reason);
       success = true; // role changed
 
       await interaction.client.getTextChannel(u.sf.channels.modlogs)?.send({ embeds: [
@@ -606,7 +610,7 @@ const modCommon = {
       if (target.roles.cache.has(u.sf.roles.trusted) == apply) return `${target} is ${apply ? "already trusted" : "not trusted yet"}!`;
       const embed = u.embed({ author: target });
       if (apply) {
-        await target.roles.add(u.sf.roles.trusted);
+        // await target.roles.add(u.sf.roles.trusted);
         success = true;
         // target.send(
         u.testingSend(interaction,
@@ -618,7 +622,7 @@ const modCommon = {
         ).catch(() => blocked(target));
         embed.setTitle("User Given Trusted").setDescription(`${interaction.member} trusted ${target} (${target.user.username}).`);
       } else {
-        await target.roles.remove([u.sf.roles.trusted, u.sf.roles.trustedplus]);
+        // await target.roles.remove([u.sf.roles.trusted, u.sf.roles.trustedplus]);
         success = true;
         // target.send(messageFromMods + `You have been removed from "Trusted" in ${interaction.guild.name}.\n`
         u.testingSend(interaction, messageFromMods + `You have been removed from "Trusted" in ${interaction.guild.name}.\n`
@@ -649,7 +653,7 @@ const modCommon = {
       const embed = u.embed({ author: target });
 
       if (apply) {
-        await target.roles.add(u.sf.roles.trustedplus);
+        // await target.roles.add(u.sf.roles.trustedplus);
         success = true;
         // target.send(
         u.testingSend(interaction,
@@ -660,7 +664,7 @@ const modCommon = {
         ).catch(() => blocked(target));
         embed.setTitle("User Given Trusted+").setDescription(`${interaction.member} gave ${target} (${target.user.username}) the <@&${u.sf.roles.trustedplus}> role.`);
       } else {
-        await target.roles.remove(u.sf.roles.trustedplus);
+        // await target.roles.remove(u.sf.roles.trustedplus);
         success = true;
         // target.send(messageFromMods +
         u.testingSend(interaction, messageFromMods +

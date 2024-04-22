@@ -288,7 +288,7 @@ async function processCardAction(interaction) {
     }
 
     if (interaction.customId == "modCardInfo") {
-      await interaction.deferReply({ ephemeral: true });
+      // await interaction.deferReply({ ephemeral: true });
       // Don't count this as processing
       processing.delete(flag.id);
       const member = await interaction.guild.members.fetch(infraction.discordId);
@@ -296,22 +296,25 @@ async function processCardAction(interaction) {
       if (roleString.length > 1024) roleString = roleString.substring(0, roleString.indexOf(", ", 1000)) + " ...";
 
       const userDoc = await u.db.user.fetchUser(member.id);
-      if (!userDoc) return interaction.editReply("I couldn't find any info on them.");
+      // if (!userDoc) return interaction.editReply("I couldn't find any info on them.");
+      if (!userDoc) return u.testingSend(interaction, "I couldn't find any info on them.");
 
       const e = await c.getSummaryEmbed(member);
 
-      interaction.editReply({ embeds: [e] });
+      // interaction.editReply({ embeds: [e] });
+      u.testingSend(interaction, { embeds: [e] });
       return;
     } else if (interaction.customId == "modCardClear") {
       // IGNORE FLAG
-      await interaction.deferUpdate();
+      // await interaction.deferUpdate();
       infraction.value = -1;
       infraction.handler = mod.id;
       await u.db.infraction.update(infraction);
       embed.setColor(0x00FF00)
         .addFields({ name: "Resolved", value: `${mod.toString()} cleared the flag.` });
       embed.data.fields = embed.data.fields?.filter(f => !f.name.startsWith("Reverted"));
-      await interaction.editReply({ embeds: [embed], components: [c.revert] });
+      // await interaction.editReply({ embeds: [embed], components: [c.revert] });
+      await u.testingSend(interaction, { embeds: [embed], components: [c.revert] });
     } else if (interaction.customId == "modCardLink") {
       // LINK TO #MODDISCUSSION
       const md = interaction.client.getTextChannel(u.sf.channels.moddiscussion);
@@ -325,14 +328,15 @@ async function processCardAction(interaction) {
       // Only the person who acted on the card (or someone in management) can retract an action
       // if (infraction.handler != mod.id && !p.calc(interaction.member, ['mgmt'])) return interaction.reply({ content: "That isn't your card to retract!", ephemeral: true });
       if (infraction.handler != mod.id && !p.calc(interaction.member, ['mgmt'])) return u.testingSend(interaction, { content: "That isn't your card to retract!", ephemeral: true });
-      await interaction.deferUpdate();
+      // await interaction.deferUpdate();
       const verbal = embed.data.fields?.find(f => f.value.includes("verbal"));
       const revertedMsg = "The offending message can't be restored" + (infraction.value > 9 ? " and the Muted role may have to be removed and the user unwatched." : ".");
       embed.setColor(0xFF0000)
       .setFields(embed.data.fields?.filter(f => !f.name.startsWith("Resolved") && !f.name.startsWith("Reverted")) ?? [])
       .addFields({ name: "Reverted", value: `${interaction.member} reverted the previous decision. ${infraction.value > 0 ? revertedMsg : ""}` });
 
-      await interaction.editReply({ embeds: [embed], components: c.modActions });
+      // await interaction.editReply({ embeds: [embed], components: c.modActions });
+      await u.testingSend(interaction, { embeds: [embed], components: c.modActions });
       if (infraction.value > 0 || verbal) {
         // await interaction.guild.members.cache.get(infraction.discordId)?.send(
         await u.testingSend(interaction,
@@ -345,7 +349,7 @@ async function processCardAction(interaction) {
       infraction.handler = undefined;
       await u.db.infraction.update(infraction);
     } else {
-      await interaction.deferUpdate();
+      // await interaction.deferUpdate();
       embed.setColor(0x0000FF);
       infraction.handler = mod.id;
       const member = interaction.guild.members.cache.get(infraction.discordId);
@@ -407,8 +411,10 @@ async function processCardAction(interaction) {
       embed.data.fields = embed.data.fields?.filter(f => !f.name || !f.name.startsWith("Jump") && !f.name.startsWith("Reverted"));
       (embed.data.fields?.find(f => f.name?.startsWith("Infraction")) ?? dummy).vlaue = `Infractions: ${infractionSummary.count}\nPoints: ${infractionSummary.points}`;
 
-      await interaction.editReply({ embeds: [embed], components: [c.revert] }).catch(() => {
-        interaction.message.edit({ embeds: [embed], components: [c.revert] }).catch((error) => u.errorHandler(error, interaction));
+      // await interaction.editReply({ embeds: [embed], components: [c.revert] }).catch(() => {
+      await u.testingSend(interaction, { embeds: [embed], components: [c.revert] }).catch(() => {
+        // interaction.message.edit({ embeds: [embed], components: [c.revert] }).catch((error) => u.errorHandler(error, interaction));
+        u.testingSend(interaction, { embeds: [embed], components: [c.revert] }).catch((error) => u.errorHandler(error, interaction));
       });
 
       if (infraction.value > 0) {

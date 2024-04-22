@@ -10,10 +10,11 @@ const Module = new Augur.Module()
   type: "ContextMessage",
   process: async (interaction) => {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      // await interaction.deferReply({ ephemeral: true });
       const message = await interaction.channel?.messages.fetch(interaction.targetId);
       if (message) {
-        await interaction.editReply("I'm sending you a DM!");
+        // await interaction.editReply("I'm sending you a DM!");
+        await u.testingSend(interaction, "I'm sending you a DM!");
         const embed = u.embed({ author: message.member ?? message.author })
           .setDescription(message.cleanContent || null)
           .setColor(message.member?.displayColor ?? null)
@@ -22,7 +23,8 @@ const Module = new Augur.Module()
         // interaction.user.send({ embeds: [embed, ...message.embeds], files: Array.from(message.attachments.values()) }).catch(u.noop);
         u.testingSend(interaction, { embeds: [embed, ...message.embeds], files: Array.from(message.attachments.values()) }).catch(u.noop);
       } else {
-        interaction.editReply("Against all odds, I couldn't find that message.");
+        // interaction.editReply("Against all odds, I couldn't find that message.");
+        u.testingSend(interaction, "Against all odds, I couldn't find that message.");
       }
     } catch (error) {
       u.errorHandler(error, interaction);

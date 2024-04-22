@@ -84,8 +84,9 @@ const utils = {
       ![utils.sf.channels.botspam, utils.sf.channels.bottesting].includes(msg.channelId) && // Isn't in the correct channel
       msg.channel.parentId !== utils.sf.channels.staffCategory) { // Isn't in the staff category
 
-      msg.reply(`I've placed your results in <#${utils.sf.channels.botspam}> to keep things nice and tidy in here. Hurry before they get cold!`)
-        .then(utils.clean);
+      // msg.reply(`I've placed your results in <#${utils.sf.channels.botspam}> to keep things nice and tidy in here. Hurry before they get cold!`)
+      utils.testingSend(msg, `I've placed your results in <#${utils.sf.channels.botspam}> to keep things nice and tidy in here. Hurry before they get cold!`);
+      // .then(utils.clean);
       return msg.guild.channels.cache.get(utils.sf.channels.botspam);
     } else {
       return msg.channel;
@@ -101,9 +102,9 @@ const utils = {
     await utils.wait(t);
     if ("deleteReply" in msg) {
       if (msg.ephemeral || !msg.replied) return; // Can't delete ephemeral interactions
-      msg.deleteReply().catch(utils.noop);
+      // msg.deleteReply().catch(utils.noop);
     } else if (msg.deletable) {
-      msg.delete().catch(utils.noop);
+      // msg.delete().catch(utils.noop);
       return msg;
     }
     return;
@@ -154,8 +155,10 @@ const utils = {
       )
     ];
 
-    if (interaction.replied) await interaction.editReply({ embeds: [embed], components, content: null });
-    else await interaction.reply({ embeds: [embed], components, ephemeral: true });
+    // if (interaction.replied) await interaction.editReply({ embeds: [embed], components, content: null });
+    if (interaction.replied) await utils.testingSend(interaction, { embeds: [embed], components, content: null });
+    // else await interaction.reply({ embeds: [embed], components, ephemeral: true });
+    else await utils.testingSend(interaction, { embeds: [embed], components, ephemeral: true });
 
     const confirm = await interaction.channel?.awaitMessageComponent({
       filter: (button) => button.user.id === interaction.user.id && (button.customId === confirmTrue || button.customId === confirmFalse),
@@ -217,7 +220,7 @@ const utils = {
 
       // message.channel.send("I've run into an error. I've let my devs know.").then(m => {
       utils.testingSend(message, "I've run into an error. I've let my devs know.").then(m => {
-        if (clean) utils.clean(m);
+        // if (clean) utils.clean(m);
       });
       embed.addFields(
         { name: "User", value: message.author.username, inline: true },
@@ -231,8 +234,9 @@ const utils = {
       // alert the user
       if (!message.isAutocomplete()) {
         if (message.replied) {
-          message.editReply("I've run into an error. I've let my devs know.").then(m => {
-            if (clean) utils.clean(m);
+          // message.editReply("I've run into an error. I've let my devs know.").then(m => {
+          utils.testingSend(message, "I've run into an error. I've let my devs know.").then(m => {
+            // if (clean) utils.clean(m);
           });
         } else {
           message.reply({ content: "I've run into an error. I've let my devs know.", ephemeral: true }).catch(utils.noop);

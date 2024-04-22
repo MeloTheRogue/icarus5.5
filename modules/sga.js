@@ -69,7 +69,8 @@ async function handleMessage(msg) {
       .setStyle(ButtonStyle.Primary),
   );
 
-  return await msg.reply({
+  // return await msg.reply({
+  return await u.testingSend(msg, {
     components: [row]
   });
 }
@@ -83,13 +84,15 @@ async function handleButton(inter) {
   try {
     message = await inter.message.fetchReference();
   } catch (e) {
-    await inter.reply({ content: "It appears the message was deleted.", ephemeral: true });
+    // await inter.reply({ content: "It appears the message was deleted.", ephemeral: true });
+    await u.testingSend(inter, { content: "It appears the message was deleted.", ephemeral: true });
     await inter.message.delete();
     return;
   }
 
   const translated = translate(message.content);
-  return await inter.reply({ content: translated, ephemeral: true });
+  // return await inter.reply({ content: translated, ephemeral: true });
+  return await u.testingSend(inter, { content: translated, ephemeral: true });
 }
 
 const Module = new Augur.Module()

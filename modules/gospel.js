@@ -99,7 +99,8 @@ async function slashGospelVerse(interaction, parsed) {
 
   const bookRef = abbreviationTable.get(book.toLowerCase());
   if (!bookRef) {
-    if (!parsed) interaction.reply({ content: "I don't understand what book you're mentioning.", ephemeral: true });
+    // if (!parsed) interaction.reply({ content: "I don't understand what book you're mentioning.", ephemeral: true });
+    if (!parsed) u.testingSend(interaction, { content: "I don't understand what book you're mentioning.", ephemeral: true });
     return;
   }
 
@@ -113,7 +114,8 @@ async function slashGospelVerse(interaction, parsed) {
     .setColor(0x012b57);
   const bookJson = require("../data/gospel/" + works[bookRef.work] + "-reference.json");
   if (!bookJson[bookRef.bookName][chapter]) {
-    if (!parsed) interaction.reply({ content: `That chapter doesn't exist in ${bookRef.bookName}!`, ephemeral: true });
+    // if (!parsed) interaction.reply({ content: `That chapter doesn't exist in ${bookRef.bookName}!`, ephemeral: true });
+    if (!parsed) u.testingSend(interaction, { content: `That chapter doesn't exist in ${bookRef.bookName}!`, ephemeral: true });
     return;
   }
   if (versesNums.length > 0) {
@@ -125,12 +127,14 @@ async function slashGospelVerse(interaction, parsed) {
     }
     const verseJoinedContent = verseContent.join("\n\n");
     if (verses && verseJoinedContent.length === 0) {
-      if (!parsed) interaction.reply({ content: "The verse(s) you requested weren't found.", ephemeral: true });
+      // if (!parsed) interaction.reply({ content: "The verse(s) you requested weren't found.", ephemeral: true });
+      if (!parsed) u.testingSend(interaction, { content: "The verse(s) you requested weren't found.", ephemeral: true });
       return;
     }
     embed.setDescription(verseJoinedContent.length > 2048 ? verseJoinedContent.slice(0, 2048) + "…" : verseJoinedContent);
   }
-  interaction.reply({ embeds: [embed] });
+  // interaction.reply({ embeds: [embed] });
+  u.testingSend(interaction, { embeds: [embed] });
 }
 
 /**
@@ -200,15 +204,17 @@ function calculateDate(inputDate, debug = false) {
 function slashGospelComeFollowMe(interaction) {
   const date = calculateDate(new Date());
   if (date && typeof date != 'string') {
-    interaction.reply(`## Come, Follow Me Lesson for the week of ${date.str}:\n${date.link}`);
+    // interaction.reply(`## Come, Follow Me Lesson for the week of ${date.str}:\n${date.link}`);
+    u.testingSend(interaction, `## Come, Follow Me Lesson for the week of ${date.str}:\n${date.link}`);
   } else {
-    interaction.reply({ content:`Sorry, I don't have information for the ${new Date().getFullYear()} manual yet.`, ephemeral: true });
+    // interaction.reply({ content:`Sorry, I don't have information for the ${new Date().getFullYear()} manual yet.`, ephemeral: true });
+    u.testingSend(interaction, { content:`Sorry, I don't have information for the ${new Date().getFullYear()} manual yet.`, ephemeral: true });
   }
 }
 
 /** @param {Discord.ChatInputCommandInteraction} interaction */
 async function slashGospelNews(interaction) {
-  await interaction.deferReply();
+  // await interaction.deferReply();
   const parser = new Parser();
   const feed = await parser.parseURL("https://newsroom.churchofjesuschrist.org/rss");
   const newsItem = feed.items[0];
@@ -219,7 +225,8 @@ async function slashGospelNews(interaction) {
     .setDescription((newsItem.content || "Description").replace(/<[\s\S]+?>/g, "")) // Remove all HTML tags from the description
     .setTimestamp(new Date(newsItem.pubDate || 1));
   const image = u.attachment().setFile('./media/ldsnewsroom.png').setName(`image.png`);
-  interaction.editReply({ embeds: [embed], files: [image] });
+  // interaction.editReply({ embeds: [embed], files: [image] });
+  u.testingSend(interaction, { embeds: [embed], files: [image] });
 }
 
 const Module = new Augur.Module()

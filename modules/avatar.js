@@ -21,7 +21,8 @@ const Augur = require("augurbot-ts"),
  */
 
 /** @param {discord.ChatInputCommandInteraction} int*/
-const errorReading = (int) => int.editReply("Sorry, but I couldn't get the image. Let my developers know if this is a reoccurring problem").then(u.clean);
+// const errorReading = (int) => int.editReply("Sorry, but I couldn't get the image. Let my developers know if this is a reoccurring problem").then(u.clean);
+const errorReading = (int) => u.testingSend(int, "Sorry, but I couldn't get the image. Let my developers know if this is a reoccurring problem");// .then(u.clean);
 
 
 /** @param {string | null} url */
@@ -56,7 +57,8 @@ async function sendImg(int, img, name, format = "png") {
   const both = Boolean(file && target);
   const image = u.attachment().setFile(img).setName(`image.${format}`);
   const embed = u.embed().setTitle(name).setImage(`attachment://${image.name}`).setFooter(both ? { text: "you provided both a user and a file, so I defaulted to using the file" } : null);
-  return int.editReply({ embeds: [embed], files: [image] });
+  // return int.editReply({ embeds: [embed], files: [image] });
+  return u.testingSend(int, { embeds: [embed], files: [image] });
 }
 
 /**
@@ -211,7 +213,7 @@ const Module = new Augur.Module()
     if (file && !interaction.options.getString('filter')) return interaction.reply({ content: "You need to specify a filter to apply if you're uploading a file", ephemeral: true });
     if (file && file.size > 4000000) return interaction.reply({ content: "That file is too big for me to process! It needs to be under 4MB.", ephemeral: true });
     if (file && file.contentType?.includes('image/webp')) return interaction.reply({ content: "Sorry, webp files are not supported at this time", ephemeral: true });
-    await interaction.deferReply();
+    // await interaction.deferReply();
     const img = await jimpRead(await targetImg(interaction));
     if (!img) return errorReading(interaction);
 

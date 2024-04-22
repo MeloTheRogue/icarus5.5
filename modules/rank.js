@@ -7,7 +7,7 @@ const active = new Set();
 async function slashRankLeaderboard(interaction) {
   // View leaderboard
   try {
-    await interaction.deferReply();
+    // await interaction.deferReply();
 
     const members = interaction.guild.members.cache;
     const leaderboard = await u.db.user.getLeaderboard({
@@ -30,7 +30,7 @@ async function slashRankLeaderboard(interaction) {
 async function slashRankTrack(interaction) {
   // Set XP tracking
   try {
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
     const track = interaction.options.getBoolean("choice");
     await u.db.user.trackXP(interaction.user, track);
     await interaction.editReply({
@@ -43,7 +43,7 @@ async function slashRankTrack(interaction) {
 async function slashRankView(interaction) {
   try {
     // View member rankings
-    await interaction.deferReply();
+    // await interaction.deferReply();
     const members = interaction.guild.members.cache;
     const member = interaction.options.getMember("user") ?? interaction.member;
     const record = await u.db.user.getRank(member, members);
@@ -148,11 +148,12 @@ const Module = new Augur.Module()
       } else if (subcommand === "track") {
         await slashRankTrack(interaction);
       } else {
-        interaction.reply({
+        // interaction.reply({
+        u.testingSend(interaction, {
           content: "Well, this is embarrasing. I don't know what you asked for.",
           ephemeral: true
         });
-        u.errorHandler(Error("Unknown Interaction Subcommand"), interaction);
+        // u.errorHandler(Error("Unknown Interaction Subcommand"), interaction);
       }
     } catch (error) {
       u.errorHandler(error, interaction);

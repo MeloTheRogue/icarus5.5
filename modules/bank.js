@@ -83,23 +83,30 @@ async function slashBankGive(interaction) {
     const currency = interaction.options.getString("currency", true);
     let value = interaction.options.getInteger("amount", true);
     let reason = interaction.options.getString("reason");
-    if (!recipient) return interaction.reply({ content: "You can't give to ***nobody***, silly.", ephemeral: true });
+    // if (!recipient) return interaction.reply({ content: "You can't give to ***nobody***, silly.", ephemeral: true });
+    if (!recipient) return u.testingSend(interaction, { content: "You can't give to ***nobody***, silly.", ephemeral: true });
 
     const toIcarus = recipient.id == interaction.client.user.id;
     const { coin, MAX } = (currency == "gb" ? { coin: gb, MAX: limit.gb } : { coin: ember, MAX: limit.ember });
 
     if (recipient.id == giver.id) {
-      return interaction.reply({ content: "You can't give to ***yourself***, silly.", ephemeral: true });
+      // return interaction.reply({ content: "You can't give to ***yourself***, silly.", ephemeral: true });
+      return u.testingSend(interaction, { content: "You can't give to ***yourself***, silly.", ephemeral: true });
     } else if (toIcarus && currency == "gb") {
-      return interaction.reply({ content: `I don't need any ${coin}! Keep em for yourself.`, ephemeral: true });
+      // return interaction.reply({ content: `I don't need any ${coin}! Keep em for yourself.`, ephemeral: true });
+      return u.testingSend(interaction, { content: `I don't need any ${coin}! Keep em for yourself.`, ephemeral: true });
     } else if (!toIcarus && recipient.user.bot) {
-      return interaction.reply({ content: `Bots don't really have a use for ${coin}.`, ephemeral: true });
+      // return interaction.reply({ content: `Bots don't really have a use for ${coin}.`, ephemeral: true });
+      u.testingSend(interaction, { content: `Bots don't really have a use for ${coin}.`, ephemeral: true });
     } else if (toIcarus && (!reason || reason.length == 0)) {
-      return interaction.reply({ content: `You need to have a reason to give ${coin} to me!`, ephemeral: true });
+      // return interaction.reply({ content: `You need to have a reason to give ${coin} to me!`, ephemeral: true });
+      return u.testingSend(interaction, { content: `You need to have a reason to give ${coin} to me!`, ephemeral: true });
     } else if (value === 0) {
-      return interaction.reply({ content: "You can't give ***nothing***.", ephemeral: true });
+      // return interaction.reply({ content: "You can't give ***nothing***.", ephemeral: true });
+      return u.testingSend(interaction, { content: "You can't give ***nothing***.", ephemeral: true });
     } else if (value < 0) {
-      return interaction.reply({ content: `One does not simply ***take*** ${coin}, silly.`, ephemeral: true });
+      // return interaction.reply({ content: `One does not simply ***take*** ${coin}, silly.`, ephemeral: true });
+      return u.testingSend(interaction, { content: `One does not simply ***take*** ${coin}, silly.`, ephemeral: true });
     }
 
     reason ??= "No particular reason";
@@ -107,7 +114,8 @@ async function slashBankGive(interaction) {
 
     const account = await u.db.bank.getBalance(giver.id);
     if (value > account[currency]) {
-      return interaction.reply({ content: `You don't have enough ${coin} to give! You can give up to ${coin}${account[currency]}`, ephemeral: true });
+      // return interaction.reply({ content: `You don't have enough ${coin} to give! You can give up to ${coin}${account[currency]}`, ephemeral: true });
+      return u.testingSend(interaction, { content: `You don't have enough ${coin} to give! You can give up to ${coin}${account[currency]}`, ephemeral: true });
     }
 
     if (!toIcarus) {
@@ -130,8 +138,9 @@ async function slashBankGive(interaction) {
       // recipient.send({ embeds: [embed] }).catch(u.noop);
       u.testingSend(interaction, { embeds: [embed] }).catch(u.noop);
     }
-    await interaction.reply(`${coin}${value} sent to ${u.escapeText(recipient.displayName)} for reason: ${reason}`);
-    u.clean(interaction);
+    // await interaction.reply(`${coin}${value} sent to ${u.escapeText(recipient.displayName)} for reason: ${reason}`);
+    await u.testingSend(interaction, `${coin}${value} sent to ${u.escapeText(recipient.displayName)} for reason: ${reason}`);
+    // u.clean(interaction);
 
     const withdrawal = {
       currency,
@@ -169,13 +178,14 @@ async function slashBankBalance(interaction) {
     const balance = await u.db.bank.getBalance(member.id);
     const embed = u.embed({ author: member })
       .setDescription(`${gb}${balance.gb}\n${ember}${balance.em}`);
-    interaction.reply({ embeds: [embed] });
+    // interaction.reply({ embeds: [embed] });
+    u.testingSend(interaction, { embeds: [embed] });
   } catch (e) { u.errorHandler(e, interaction); }
 }
 
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction*/
 async function slashBankGameList(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  // await interaction.deferReply({ ephemeral: true });
 
   try {
     let games = await getGameList();
@@ -212,7 +222,8 @@ async function slashBankGameList(interaction) {
 
     let embed2 = embeds.shift();
     if (!embed2) return;
-    interaction.editReply({ embeds: [embed2] });
+    // interaction.editReply({ embeds: [embed2] });
+    u.testingSend(interaction, { embeds: [embed2] });
     while (embeds.length > 0) {
       embed2 = embeds.shift();
       if (!embed2) break;
@@ -228,12 +239,13 @@ async function slashBankGameList(interaction) {
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction */
 async function slashBankGameRedeem(interaction) {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
     const games = await getGameList();
     if (!games) throw new Error("Get Game List Error");
     const game = games.find(g => (g.Code == interaction.options.getString("code", true).toUpperCase()));
     if (!game) {
-      interaction.editReply(`I couldn't find that game. Use </bank game list:${u.sf.commands.slashBank}>to see available games.`);
+      // interaction.editReply(`I couldn't find that game. Use </bank game list:${u.sf.commands.slashBank}>to see available games.`);
+      u.testingSend(interaction, `I couldn't find that game. Use </bank game list:${u.sf.commands.slashBank}>to see available games.`);
       return;
     }
 
@@ -246,7 +258,8 @@ async function slashBankGameRedeem(interaction) {
 
     const balance = await u.db.bank.getBalance(interaction.user.id);
     if (balance.gb < parseFloat(game.Cost)) {
-      return interaction.editReply(`You don't currently have enough ${gb}. Sorry!`);
+      // return interaction.editReply(`You don't currently have enough ${gb}. Sorry!`);
+      return u.testingSend(interaction, `You don't currently have enough ${gb}. Sorry!`);
     }
 
     await u.db.bank.addCurrency({
@@ -277,7 +290,8 @@ async function slashBankGameRedeem(interaction) {
     game.Recipient = interaction.user.username;
     game.Date = new Date().toDateString();
     game.save();
-    await interaction.editReply({ content: "I also DMed this message to you so you don't lose the code!", embeds: [embed] });
+    // await interaction.editReply({ content: "I also DMed this message to you so you don't lose the code!", embeds: [embed] });
+    await u.testingSend(interaction, { content: "I also DMed this message to you so you don't lose the code!", embeds: [embed] });
     // interaction.user.send({ embeds: [embed] }).catch(() => {
     u.testingSend(interaction, { embeds: [embed] }).catch(() => {
       interaction.followUp({ content: "I wasn't able to send you the game key! Do you have DMs allowed for server members? Please note down your game key somewhere safe, and check with a member of Management if you lose it.", ephemeral: true });
@@ -296,14 +310,16 @@ async function slashBankGameRedeem(interaction) {
 /** @param {Augur.GuildInteraction<"CommandSlash">} interaction */
 async function slashBankDiscount(interaction) {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
     const amount = interaction.options.getInteger("amount", true);
     const balance = await u.db.bank.getBalance(interaction.user.id);
     if ((amount > balance.gb) || (amount < 0) || (amount > limit.gb)) {
-      return interaction.editReply(`That amount (${gb}${amount}) is invalid. You can currently redeem up to ${gb}${Math.min(balance.gb, limit.gb)}.`);
+      // return interaction.editReply(`That amount (${gb}${amount}) is invalid. You can currently redeem up to ${gb}${Math.min(balance.gb, limit.gb)}.`);
+      return u.testingSend(interaction, `That amount (${gb}${amount}) is invalid. You can currently redeem up to ${gb}${Math.min(balance.gb, limit.gb)}.`);
     }
 
-    if (!config.api.snipcart) return interaction.editReply("Store discounts are currently unavailable. Sorry for the inconvenience. We're working on it!");
+    // if (!config.api.snipcart) return interaction.editReply("Store discounts are currently unavailable. Sorry for the inconvenience. We're working on it!");
+    if (!config.api.snipcart) return u.testingSend(interaction, "Store discounts are currently unavailable. Sorry for the inconvenience. We're working on it!");
     const snipcart = require("../utils/snipcart")(config.api.snipcart);
     const discountInfo = {
       name: `${interaction.user.username} ${Date().toLocaleString()}`,
@@ -328,7 +344,8 @@ async function slashBankDiscount(interaction) {
       };
       const withdraw = await u.db.bank.addCurrency(withdrawal);
       const recieptMessage = `You have redeemed ${gb}${withdraw.value} for a $${discount.amount} discount code in the LDS Gamers Store! <http://ldsgamers.com/shop>\n\nUse code __**${discount.code}**__ at checkout to apply the discount. This code will be good for ${discount.maxNumberOfUsages} use. (Note that means that if you redeem a code and don't use its full value, the remaining value is lost.)\n\nYou now have ${gb}${balance.gb + withdraw.value}.`;
-      await interaction.editReply(recieptMessage + "\nI also DMed this message to you so you don't lose the code!");
+      // await interaction.editReply(recieptMessage + "\nI also DMed this message to you so you don't lose the code!");
+      await u.testingSend(interaction, recieptMessage + "\nI also DMed this message to you so you don't lose the code!");
       // interaction.user.send(recieptMessage)
       u.testingSend(interaction, recieptMessage)
       .catch(() => {
@@ -342,7 +359,8 @@ async function slashBankDiscount(interaction) {
         .setDescription(`**${u.escapeText(interaction.member.displayName)}** just redeemed ${gb} for a store coupon code.`);
       interaction.client.getTextChannel(u.sf.channels.management)?.send({ embeds: [embed] });
     } else {
-      interaction.editReply("Sorry, something went wrong. Please try again.");
+      // interaction.editReply("Sorry, something went wrong. Please try again.");
+      u.testingSend(interaction, "Sorry, something went wrong. Please try again.");
     }
   } catch (e) { u.errorHandler(e, interaction); }
 }
@@ -354,18 +372,24 @@ async function slashBankAward(interaction) {
     const recipient = interaction.options.getMember("recipient");
     const reason = interaction.options.getString("reason") || "Astounding feats of courage, wisdom, and heart";
     let value = interaction.options.getInteger("amount", true);
-    if (!recipient) return interaction.reply({ content: "You can't just award *nobody*!", ephemeral: true });
+    // if (!recipient) return interaction.reply({ content: "You can't just award *nobody*!", ephemeral: true });
+    if (!recipient) return u.testingSend(interaction, { content: "You can't just award *nobody*!", ephemeral: true });
 
     if (!p.calc(giver, ["team", "volunteer", "mgr"])) {
-      return interaction.reply({ content: `*Nice try!* This command is for Volunteers and Team+ only!`, ephemeral: true });
+      // return interaction.reply({ content: `*Nice try!* This command is for Volunteers and Team+ only!`, ephemeral: true });
+      return u.testingSend(interaction, { content: `*Nice try!* This command is for Volunteers and Team+ only!`, ephemeral: true });
     } else if (recipient.id == giver.id) {
-      return interaction.reply({ content: `You can't award ***yourself*** ${ember}, silly.`, ephemeral: true });
+      // return interaction.reply({ content: `You can't award ***yourself*** ${ember}, silly.`, ephemeral: true });
+      return u.testingSend(interaction, { content: `You can't award ***yourself*** ${ember}, silly.`, ephemeral: true });
     } else if (recipient.id == interaction.client.user.id) {
-      return interaction.reply({ content: `You can't award ***me*** ${ember}, silly.`, ephemeral: true });
+      // return interaction.reply({ content: `You can't award ***me*** ${ember}, silly.`, ephemeral: true });
+      return u.testingSend(interaction, { content: `You can't award ***me*** ${ember}, silly.`, ephemeral: true });
     } else if (recipient.id != interaction.client.user.id && recipient.user.bot) {
-      return interaction.reply({ content: `Bots don't really have a use for ${ember}.`, ephemeral: true });
+      // return interaction.reply({ content: `Bots don't really have a use for ${ember}.`, ephemeral: true });
+      return u.testingSend(interaction, { content: `Bots don't really have a use for ${ember}.`, ephemeral: true });
     } else if (value === 0) {
-      return interaction.reply({ content: "You can't award ***nothing***.", ephemeral: true });
+      // return interaction.reply({ content: "You can't award ***nothing***.", ephemeral: true });
+      return u.testingSend(interaction, { content: "You can't award ***nothing***.", ephemeral: true });
     }
     value = value < 0 ? Math.max(value, -1 * limit.ember) : Math.min(value, limit.ember);
 
@@ -388,10 +412,11 @@ async function slashBankAward(interaction) {
       )
       .setDescription(`${u.escapeText(giver.displayName)} just ${str("you")}! This counts toward your House's Points.`);
 
-    await interaction.reply(`Successfully ${str(recipient.displayName)} for ${reason}`);
+    // await interaction.reply(`Successfully ${str(recipient.displayName)} for ${reason}`);
+    await u.testingSend(interaction, `Successfully ${str(recipient.displayName)} for ${reason}`);
     // recipient.send({ embeds: [embed] }).catch(() => interaction.followUp({ content: `I wasn't able to alert ${recipient} about the award. Please do so yourself.`, ephemeral: true }));
     u.testingSend(interaction, { embeds: [embed] }).catch(() => interaction.followUp({ content: `I wasn't able to alert ${recipient} about the award. Please do so yourself.`, ephemeral: true }));
-    u.clean(interaction, 60000);
+    // u.clean(interaction, 60000);
 
     embed = u.embed({ author: interaction.client.user })
       .addFields({ name: "Reason", value: reason })
